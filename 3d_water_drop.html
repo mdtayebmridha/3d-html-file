@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Procedural Water Splash</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 300vh; /* Scrollable height */
+            background-color: #000;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 1;
+        }
+
+        /* Overlay UI */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+            box-sizing: border-box;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            animation: pulse 2s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.5rem;
+            letter-spacing: 5px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loading" id="loading">Generating Fluid...</div>
+
+    <div class="overlay" id="overlay" style="opacity: 0;">
+        <div class="header">
+            <div>O-I Fluid Engine</div>
+            <div>Pure WebGL</div>
+        </div>
+        <div class="footer">
+            Scroll Slowly to Simulate Physics
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Setup Scene
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // Give the background a moody dark blue/cyan gradient feel
+        scene.background = new THREE.Color(0x0a192f);
+        scene.fog = new THREE.FogExp2(0x0a192f, 0.05);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        // Position camera to look slightly down at the water surface
+        camera.position.set(0, 4, 12);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        // Lighting to make the water look realistic
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(5, 10, 5);
+        scene.add(dirLight);
+
+        const pointLight = new THREE.PointLight(0x00d2ff, 2, 20);
+        pointLight.position.set(-5, 5, -5);
+        scene.add(pointLight);
+
+        // --- Realistic Water Material ---
+        // Using MeshPhysicalMaterial for refraction/transmission (glass-like fluid)
+        const waterMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x66ccff,
+            metalness: 0.1,
+            roughness: 0.1,
+            transmission: 0.9, // glass-like
+            ior: 1.33, // Index of refraction for water
+            transparent: true,
+            opacity: 1,
+            side: THREE.DoubleSide
+        });
+
+        // 1. The Water Surface
+        const surfaceGeo = new THREE.PlaneGeometry(30, 30, 64, 64);
+        const surface = new THREE.Mesh(surfaceGeo, waterMaterial);
+        surface.rotation.x = -Math.PI / 2;
+        scene.add(surface);
+
+        // 2. The Initial Falling Droplet
+        const dropGeo = new THREE.SphereGeometry(0.5, 32, 32);
+        const droplet = new THREE.Mesh(dropGeo, waterMaterial);
+        scene.add(droplet);
+
+        // 3. The Rebound Column (Worthington Jet)
+        const columnGeo = new THREE.CylinderGeometry(0.2, 0.6, 1, 32, 1, false);
+        // Shift geometry so it scales from the bottom instead of center
+        columnGeo.translate(0, 0.5, 0);
+        const column = new THREE.Mesh(columnGeo, waterMaterial);
+        column.visible = false; // Hidden initially
+        scene.add(column);
+
+        // 4. The Detached Top Droplet
+        const topDropGeo = new THREE.SphereGeometry(0.3, 32, 32);
+        const topDroplet = new THREE.Mesh(topDropGeo, waterMaterial);
+        topDroplet.visible = false;
+        scene.add(topDroplet);
+
+        // 5. The Expanding Ripple Rings
+        const rippleRings = [];
+        for (let i = 0; i < 3; i++) {
+            const ringGeo = new THREE.TorusGeometry(1, 0.05, 16, 64);
+            const ringMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0,
+                transmission: 0.9,
+                roughness: 0.2
+            });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            scene.add(ring);
+            rippleRings.push(ring);
+        }
+
+        // Hide loading screen
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('overlay').style.opacity = '1';
+
+        // --- Scroll Logic & Animation ---
+        let scrollProgress = 0;
+        let targetProgress = 0;
+
+        window.addEventListener('scroll', () => {
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            targetProgress = window.scrollY / maxScroll; // Value between 0 and 1
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // Smoothly interpolate progress
+            scrollProgress += (targetProgress - scrollProgress) * 0.1;
+
+            // Subtle surface idle animation (waves)
+            const positions = surface.geometry.attributes.position;
+            for (let i = 0; i < positions.count; i++) {
+                const x = positions.getX(i);
+                const y = positions.getY(i);
+                // Basic sine wave based on distance from center + time
+                const dist = Math.sqrt(x*x + y*y);
+                let z = Math.sin(dist * 2 - time * 2) * 0.1;
+                
+                // Add the physical impact ripple if we are past impact point (0.3)
+                if (scrollProgress > 0.3) {
+                    const rippleTime = (scrollProgress - 0.3) * 10; // scale up progress
+                    // A wave that travels outward
+                    const wavePhase = dist * 3 - rippleTime * 15;
+                    if (wavePhase < 0 && wavePhase > -Math.PI * 4) {
+                        z += Math.sin(wavePhase) * (1 - scrollProgress) * 0.5 * Math.max(0, 1 - dist/10);
+                    }
+                }
+                
+                positions.setZ(i, z);
+            }
+            surface.geometry.attributes.position.needsUpdate = true;
+
+            // --- Procedural Sequence Logic ---
+
+            if (scrollProgress < 0.3) {
+                // STAGE 1: Droplet falling
+                const p = scrollProgress / 0.3; // 0 to 1
+                droplet.visible = true;
+                column.visible = false;
+                topDroplet.visible = false;
+
+                // Fall from Y=6 down to Y=0
+                droplet.position.y = 6 - (p * 6);
+                
+                // Stretch to look like it's falling fast
+                droplet.scale.set(1 - p*0.2, 1 + p*0.5, 1 - p*0.2);
+
+                // Reset rings
+                rippleRings.forEach(ring => ring.material.opacity = 0);
+
+            } else if (scrollProgress < 0.4) {
+                // STAGE 2: Impact & Squash
+                const p = (scrollProgress - 0.3) / 0.1; // 0 to 1
+                droplet.visible = true;
+                column.visible = false;
+                topDroplet.visible = false;
+
+                // Squash into the surface
+                droplet.position.y = 0;
+                droplet.scale.set(1 + p*2, 1 - p, 1 + p*2);
+                droplet.material.opacity = 1 - p; // fade out as it merges
+
+                // Trigger rings
+                rippleRings.forEach((ring, i) => {
+                    const delay = i * 0.3;
+                    let ringP = p * 3 - delay; // speed up ring relative to progress
+                    if (ringP > 0) {
+                        ring.scale.setScalar(1 + ringP * 5);
+                        ring.material.opacity = Math.max(0, 1 - ringP);
+                    }
+                });
+
+            } else if (scrollProgress < 0.7) {
+                // STAGE 3: The Worthington Jet (Column rises)
+                const p = (scrollProgress - 0.4) / 0.3; // 0 to 1
+                droplet.visible = false;
+                column.visible = true;
+                topDroplet.visible = false;
+
+                // Column grows upward
+                // Use sine to make it shoot up fast then slow down at the peak
+                const height = Math.sin(p * Math.PI / 2) * 3;
+                column.scale.set(1 - p*0.5, height, 1 - p*0.5); // gets thinner as it rises
+
+                // Rings continue expanding
+                rippleRings.forEach((ring, i) => {
+                    const ringP = 3 - i*0.3 + p*2;
+                    ring.scale.setScalar(1 + ringP * 2);
+                    ring.material.opacity = Math.max(0, 0.5 - p);
+                });
+
+            } else {
+                // STAGE 4: Detachment & Recoil
+                const p = (scrollProgress - 0.7) / 0.3; // 0 to 1
+                column.visible = true;
+                topDroplet.visible = true;
+
+                // Column shrinks back down
+                const colHeight = 3 * (1 - p);
+                column.scale.set(0.5 + p*0.5, colHeight, 0.5 + p*0.5);
+
+                // Top droplet detaches and flies up, then arcs down
+                topDroplet.position.y = 3 + Math.sin(p * Math.PI) * 1.5;
+                // Add a little spin for realism
+                topDroplet.rotation.x = p * Math.PI;
+                topDroplet.rotation.z = p * Math.PI;
+
+            }
+
+            // Slowly rotate camera around the scene based on time
+            camera.position.x = Math.sin(time * 0.1) * 12;
+            camera.position.z = Math.cos(time * 0.1) * 12;
+            camera.lookAt(0, 2, 0);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

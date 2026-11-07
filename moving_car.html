@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinematic Moving Car</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100vh;
+            background-color: #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* The main container holding the scene */
+        .scene {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            /* Subtle engine vibration animation */
+            animation: engineRumble 0.1s infinite alternate linear;
+        }
+
+        /* The static image */
+        .background-image {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            /* Using the original AVIF file */
+            background-image: url('file:///C:/Imam\'s m51/tayeb/photo-1484950763426-56b5bf172dbb.avif');
+            background-size: cover;
+            background-position: center bottom;
+            z-index: 1;
+        }
+
+        /* Engine Rumble Keyframes */
+        @keyframes engineRumble {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(1.5px) rotate(0.05deg); }
+        }
+
+        /* Headlight Beam */
+        .headlight {
+            position: absolute;
+            /* Approximate position of the car's headlights based on the image */
+            bottom: 23%;
+            left: 54%;
+            width: 60vw;
+            height: 15vh;
+            background: linear-gradient(90deg, rgba(255,255,200,0.8) 0%, rgba(255,255,255,0.2) 40%, transparent 100%);
+            clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 60%);
+            z-index: 2;
+            opacity: 0.7;
+            /* Headlight flicker from bumps */
+            animation: headlightFlicker 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes headlightFlicker {
+            0%, 100% { opacity: 0.7; transform: scaleY(1); }
+            50% { opacity: 0.85; transform: scaleY(1.05); }
+            70% { opacity: 0.6; transform: scaleY(0.95); }
+        }
+
+        /* Tail light glow */
+        .taillight {
+            position: absolute;
+            bottom: 24%;
+            left: 36%;
+            width: 5vw;
+            height: 5vw;
+            background: radial-gradient(circle, rgba(255,0,0,0.8) 0%, transparent 70%);
+            z-index: 2;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        /* Canvas for the dust/speed lines flying past */
+        #speedCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Cinematic Overlay */
+        .cinematic-bars {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 20;
+            background: linear-gradient(to bottom, 
+                rgba(0,0,0,1) 0%, rgba(0,0,0,0) 10%, 
+                rgba(0,0,0,0) 90%, rgba(0,0,0,1) 100%);
+        }
+
+        /* Text UI */
+        .ui {
+            position: absolute;
+            bottom: 50px; left: 50px;
+            z-index: 30;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .speedometer {
+            font-size: 1rem;
+            color: #ff3366;
+            margin-top: 5px;
+            font-weight: 300;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="scene">
+        <div class="background-image"></div>
+        <div class="headlight"></div>
+        <div class="taillight"></div>
+        <canvas id="speedCanvas"></canvas>
+    </div>
+
+    <div class="cinematic-bars"></div>
+
+    <div class="ui">
+        <h1 class="title">Night Drive</h1>
+        <div class="speedometer">Cruising <span id="speedValue">65</span> MPH</div>
+    </div>
+
+    <script>
+        // --- Canvas Particle System for Speed Lines ---
+        const canvas = document.getElementById('speedCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                // Start particles from the right side of the screen
+                this.x = width + Math.random() * 500;
+                // Mostly concentrate particles near the bottom (ground level)
+                this.y = height * 0.6 + Math.random() * (height * 0.4);
+                // Fast horizontal speed to simulate driving
+                this.speed = 15 + Math.random() * 25;
+                this.length = this.speed * 2;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                // Dust color
+                this.color = `rgba(200, 200, 220, ${this.opacity})`;
+            }
+
+            update() {
+                this.x -= this.speed;
+                if (this.x < -this.length) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x + this.length, this.y);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = Math.random() * 2 + 1;
+                ctx.stroke();
+            }
+        }
+
+        // Create initial particles
+        for (let i = 0; i < 150; i++) {
+            particles.push(new Particle());
+        }
+
+        // Add some random speed fluctuations to the speedometer
+        const speedValue = document.getElementById('speedValue');
+        setInterval(() => {
+            const currentSpeed = 65 + Math.floor(Math.random() * 5) - 2;
+            speedValue.innerText = currentSpeed;
+        }, 500);
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

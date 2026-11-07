@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic WebGL Water Drop Slider</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; /* Scroll Jacking */
+            background-color: #000;
+            font-family: 'Inter', sans-serif;
+            color: white;
+        }
+
+        /* The WebGL Water Surface */
+        #water-surface {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            /* High quality dark background image that will be distorted by the water */
+            background-image: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000');
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+            transition: background-image 1s ease-in-out;
+        }
+
+        /* Dark Overlay to make the text pop */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Text Content */
+        .content-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        .slide-text {
+            position: absolute;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1s ease, transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .slide-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            letter-spacing: 8px;
+            color: #b0c4de;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .title {
+            font-size: 8vw;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        /* Realistic Droplet */
+        #realistic-droplet {
+            position: absolute;
+            left: 50%;
+            top: -100px; /* Hidden above screen */
+            transform: translateX(-50%);
+            width: 30px;
+            height: 45px;
+            z-index: 10;
+            /* A CSS shape that looks like a realistic teardrop/water drop */
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(150,200,255,0.4) 40%, rgba(0,50,100,0.8) 80%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            border-top-left-radius: 50% 100%;
+            border-top-right-radius: 50% 100%;
+            border-bottom-left-radius: 50% 30%;
+            border-bottom-right-radius: 50% 30%;
+            box-shadow: 
+                inset 5px 5px 10px rgba(255,255,255,0.6),
+                inset -5px -5px 15px rgba(0,0,0,0.5),
+                0 15px 20px rgba(0,0,0,0.3);
+            /* Squeeze the top to look like a falling drop */
+            clip-path: polygon(50% 0%, 100% 60%, 80% 100%, 20% 100%, 0% 60%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* Alternatively, an SVG Drop looks even more realistic */
+        #svg-droplet {
+            position: absolute;
+            left: 50%;
+            top: -100px;
+            transform: translateX(-50%);
+            width: 25px;
+            height: 40px;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            filter: drop-shadow(0px 10px 10px rgba(0,0,0,0.5));
+        }
+
+        .global-nav {
+            position: fixed;
+            top: 40px; left: 50px; right: 50px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 100;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .indicator {
+            position: fixed;
+            bottom: 40px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;900&display=swap" rel="stylesheet">
+    
+    <!-- Dependencies for Realistic WebGL Ripples -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.ripples@0.6.3/jquery.ripples.min.js"></script>
+</head>
+<body>
+
+    <div class="global-nav">
+        <div>O-I STUDIO</div>
+        <div>SCROLL DOWN</div>
+    </div>
+
+    <div class="indicator">Scroll to Drop</div>
+
+    <!-- The surface that will have WebGL ripples applied -->
+    <div id="water-surface"></div>
+    <div class="overlay"></div>
+
+    <!-- SVG Realistic Drop -->
+    <svg id="svg-droplet" viewBox="0 0 30 45" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="waterGrad" cx="30%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+                <stop offset="30%" stop-color="#add8e6" stop-opacity="0.6"/>
+                <stop offset="80%" stop-color="#003366" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#001133" stop-opacity="0.9"/>
+            </radialGradient>
+        </defs>
+        <path d="M15,0 C15,0 30,25 30,35 C30,43.284 23.284,50 15,50 C6.716,50 0,43.284 0,35 C0,25 15,0 15,0 Z" fill="url(#waterGrad)" />
+    </svg>
+
+    <!-- Slide Texts -->
+    <div class="content-layer">
+        <div class="slide-text active" id="text-0">
+            <div class="subtitle">01 / Surface</div>
+            <h1 class="title">REFLECTION</h1>
+        </div>
+        <div class="slide-text" id="text-1">
+            <div class="subtitle">02 / Impact</div>
+            <h1 class="title">THE RIPPLE</h1>
+        </div>
+        <div class="slide-text" id="text-2">
+            <div class="subtitle">03 / Depth</div>
+            <h1 class="title">THE ABYSS</h1>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize WebGL Realistic Ripples
+            // This plugin distorts the background image using a WebGL shader to look exactly like real water.
+            $('#water-surface').ripples({
+                resolution: 512,
+                dropRadius: 25, // How wide the ripple is
+                perturbance: 0.05, // Refraction strength (how much it distorts the image)
+                interactive: true // Allows mouse to create ripples too!
+            });
+
+            const slideData = [
+                { bg: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000')" }, // Ocean
+                { bg: "url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000')" }, // Space
+                { bg: "url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2000')" }  // Abstract Sky
+            ];
+
+            const totalSlides = 3;
+            let currentIdx = 0;
+            let isAnimating = false;
+            const droplet = document.getElementById('svg-droplet');
+
+            // Mouse wheel listener
+            window.addEventListener('wheel', (e) => {
+                if (isAnimating) return;
+
+                if (e.deltaY > 0 && currentIdx < totalSlides - 1) {
+                    triggerDrop(currentIdx + 1);
+                } else if (e.deltaY < 0 && currentIdx > 0) {
+                    triggerDrop(currentIdx - 1);
+                }
+            });
+
+            function triggerDrop(targetIdx) {
+                isAnimating = true;
+
+                // 1. Prepare droplet
+                droplet.style.transition = 'none';
+                droplet.style.top = '-100px';
+                droplet.style.opacity = '1';
+                
+                // Force reflow
+                void droplet.offsetWidth;
+
+                // 2. Drop falls to center
+                // Gravity cubic bezier curve to simulate acceleration
+                droplet.style.transition = 'top 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
+                droplet.style.top = '50%'; // Drops exactly to center
+
+                // Wait for the drop to hit (500ms)
+                setTimeout(() => {
+                    // Hide the physical drop
+                    droplet.style.opacity = '0';
+
+                    // 3. TRIGGER REALISTIC WEBGL RIPPLE
+                    // Get exact center of window
+                    const x = window.innerWidth / 2;
+                    const y = window.innerHeight / 2;
+                    
+                    // Fire a heavy drop (large radius and strong perturbance)
+                    $('#water-surface').ripples('drop', x, y, 40, 0.15);
+                    
+                    // Fire a second smaller drop slightly later for realism
+                    setTimeout(() => {
+                        $('#water-surface').ripples('drop', x, y, 20, 0.05);
+                    }, 100);
+
+                    // 4. Change the background image and text while the water is rippling
+                    setTimeout(() => {
+                        $('#water-surface').css('background-image', slideData[targetIdx].bg);
+                        
+                        // Switch Text
+                        document.getElementById(`text-${currentIdx}`).classList.remove('active');
+                        document.getElementById(`text-${targetIdx}`).classList.add('active');
+                        
+                        currentIdx = targetIdx;
+                    }, 300); // Change bg as ripple expands
+
+                    // Unlock after everything settles
+                    setTimeout(() => {
+                        isAnimating = false;
+                    }, 1500);
+
+                }, 500);
+            }
+            
+            // Allow clicking to manually drop water for fun
+            $('#water-surface').on('mousedown', function(e) {
+                $('#water-surface').ripples('drop', e.offsetX, e.offsetY, 20, 0.08);
+            });
+        });
+    </script>
+</body>
+</html>

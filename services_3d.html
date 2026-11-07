@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium 3D Services</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap');
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; min-height: 100vh;
+            background-color: #050505;
+            font-family: 'Outfit', sans-serif;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Abstract glowing background */
+        .bg-glow {
+            position: fixed;
+            top: 50%; left: 50%;
+            width: 80vw; height: 80vw;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(62, 0, 255, 0.15) 0%, rgba(255, 0, 128, 0.05) 40%, transparent 70%);
+            filter: blur(100px);
+            z-index: -1;
+            pointer-events: none;
+            animation: pulseBg 10s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulseBg {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        .header {
+            text-align: center;
+            margin-top: 10vh;
+            margin-bottom: 8vh;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            margin: 0;
+            background: linear-gradient(90deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -2px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* The 3D Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            width: 85%;
+            max-width: 1200px;
+            margin-bottom: 10vh;
+            perspective: 2000px; /* Crucial for 3D depth */
+            z-index: 10;
+        }
+
+        /* The 3D Card */
+        .service-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 40px 30px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transform-style: preserve-3d; /* Allows children to pop out in 3D */
+            transition: transform 0.1s ease, border-color 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+            /* Box shadow for depth */
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        /* Dynamic glare effect that follows mouse */
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .service-card:hover::before {
+            opacity: 1;
+        }
+
+        .service-card:hover {
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        /* Card Content that pops out in 3D */
+        .card-content {
+            position: relative;
+            z-index: 2;
+            /* This is the magic! It pushes the text forward in 3D space */
+            transform: translateZ(60px); 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Icon Container */
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(62, 0, 255, 0.5), rgba(255, 0, 128, 0.5));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            /* Icon pops out even further */
+            transform: translateZ(30px);
+        }
+
+        .icon-box svg {
+            width: 30px;
+            height: 30px;
+            fill: white;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+            color: #fff;
+        }
+
+        .card-text {
+            color: #aaa;
+            line-height: 1.6;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .learn-more {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            opacity: 0;
+            transform: translateY(20px) translateZ(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .service-card:hover .learn-more {
+            opacity: 1;
+            transform: translateY(0) translateZ(40px);
+        }
+
+        .learn-more svg {
+            width: 15px;
+            height: 15px;
+            fill: currentColor;
+            transition: transform 0.3s ease;
+        }
+
+        .service-card:hover .learn-more svg {
+            transform: translateX(5px);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow"></div>
+
+    <div class="header">
+        <p>What We Do</p>
+        <h1>Premium Services</h1>
+    </div>
+
+    <div class="services-grid">
+        
+        <!-- Card 1 -->
+        <div class="service-card">
+            <div class="card-content">
+                <div class="icon-box" style="background: linear-gradient(135deg, #00f2fe, #4facfe);">
+                    <svg viewBox="0 0 24 24"><path d="M12 0l-11 5v14l11 5 11-5v-14zM12 21.8l-8.5-3.8v-10.3l8.5 3.8v10.3zm0-12.7l-8.5-3.8 8.5-3.8 8.5 3.8-8.5 3.8zm8.5 12.7l-8.5 3.8v-10.3l8.5-3.8v10.3z"/></svg>
+                </div>
+                <h2 class="card-title">3D Development</h2>
+                <p class="card-text">We craft immersive, highly interactive 3D WebGL experiences that captivate users and elevate your brand to the next dimension.</p>
+                <div class="learn-more">Explore <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="service-card">
+            <div class="card-content">
+                <div class="icon-box" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                    <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm2 2h8v2H8V8zm0 4h6v2H8v-2z"/></svg>
+                </div>
+                <h2 class="card-title">UI/UX Design</h2>
+                <p class="card-text">Pixel-perfect, user-centric interfaces designed with modern glassmorphism, fluid animations, and premium typography.</p>
+                <div class="learn-more">Explore <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="service-card">
+            <div class="card-content">
+                <div class="icon-box" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13h-13L12 6.5zM11 10v5h2v-5h-2zm0 7v2h2v-2h-2z"/></svg>
+                </div>
+                <h2 class="card-title">Brand Identity</h2>
+                <p class="card-text">Building strong, memorable digital identities through cutting-edge visual storytelling and dynamic motion graphics.</p>
+                <div class="learn-more">Explore <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const cards = document.querySelectorAll('.service-card');
+
+        cards.forEach(card => {
+            // Add 3D Tilt Effect on mousemove
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left; // x position within the element
+                const y = e.clientY - rect.top;  // y position within the element
+
+                // Calculate center
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                // Calculate rotation (max 15 degrees)
+                // If mouse is on the right, rotate Y positively. If on top, rotate X positively.
+                const rotateY = ((x - centerX) / centerX) * 12;
+                const rotateX = ((centerY - y) / centerY) * 12;
+
+                // Apply rotation and scale
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+
+                // Update CSS variables for the glare effect position
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+
+            // Reset transform when mouse leaves
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+                
+                // Add a smooth transition specifically for the reset
+                card.style.transition = 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.3s ease';
+            });
+
+            // Remove transition when hovering starts so it follows mouse instantly
+            card.addEventListener('mouseenter', () => {
+                card.style.transition = 'transform 0.1s ease, border-color 0.3s ease';
+            });
+        });
+    </script>
+</body>
+</html>

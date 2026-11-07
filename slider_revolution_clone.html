@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beautiful Parallax Slider</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Inter', Helvetica, Arial, sans-serif;
+            color: white;
+        }
+
+        /* --- UI Elements --- */
+        header {
+            position: absolute; top: 40px; left: 40px; right: 40px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 100; mix-blend-mode: difference;
+        }
+        .logo { font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; }
+        .menu-link { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+        
+        footer {
+            position: absolute; bottom: 40px; left: 40px; right: 40px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 100; mix-blend-mode: difference;
+        }
+        .pagination { font-size: 1rem; letter-spacing: 2px; width: 100px; font-weight: bold; }
+        
+        /* Navigation Arrows */
+        .controls { display: flex; gap: 30px; }
+        .arrow { 
+            cursor: pointer; font-size: 1.5rem; opacity: 0.5; transition: 0.3s;
+            display: flex; align-items: center; gap: 10px; font-weight: bold; letter-spacing: 2px;
+        }
+        .arrow:hover { opacity: 1; transform: scale(1.1); }
+        .arrow span { font-size: 2rem; }
+
+        .contact { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; text-align: right; width: 100px; }
+
+        /* --- The Slider Engine --- */
+        .slider-container {
+            position: relative;
+            width: 100%; height: 100%;
+            overflow: hidden;
+        }
+
+        /* Slide Container */
+        .slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            /* Start state: Below the screen */
+            transform: translateY(100%);
+            /* The "Beautiful" Easing: easeOutExpo */
+            transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .slide.active {
+            transform: translateY(0%);
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .slide.prev {
+            /* State when moved up past the screen */
+            transform: translateY(-100%);
+            z-index: 5;
+        }
+
+        /* --- Internal Layers (The Parallax Magic) --- */
+        
+        /* 1. Background */
+        .layer-bg-wrap {
+            position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
+            transform: translateY(30%); /* Starts shifted down */
+            transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .slide.active .layer-bg-wrap { transform: translateY(0%); }
+        .slide.prev .layer-bg-wrap { transform: translateY(-30%); } /* Shifts up when leaving */
+
+        .parallax-mouse-target {
+            width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            will-change: transform; transition: transform 0.1s ease-out;
+        }
+
+        #slide-1 .parallax-mouse-target { background-image: url('https://images.unsplash.com/photo-1551244072-5d12893278ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); filter: brightness(0.6); }
+        #slide-2 .parallax-mouse-target { background-image: url('https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); filter: brightness(0.7); }
+        #slide-3 .parallax-mouse-target { background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); filter: brightness(0.6); }
+
+        /* 2. Text Layer */
+        .layer-text-wrap {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; z-index: 2;
+            
+            /* Text comes from below with a delay */
+            transform: translateY(60%);
+            opacity: 0;
+            transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 1.5s ease;
+        }
+        
+        .slide.active .layer-text-wrap { 
+            transform: translateY(0%); 
+            opacity: 1; 
+            transition-delay: 0.2s; /* Wait slightly for slide to start moving */
+        }
+        .slide.prev .layer-text-wrap { 
+            transform: translateY(-60%); 
+            opacity: 0; 
+            transition-delay: 0s; 
+        }
+
+        .subtitle { font-size: 1.2rem; letter-spacing: 10px; text-transform: uppercase; margin-bottom: 0px; color: #ffcccc; font-weight: bold; }
+        .title { font-size: 12vw; font-weight: 900; line-height: 0.8; margin: 0; letter-spacing: -5px; }
+        .desc { margin-top: 40px; max-width: 500px; font-size: 1.2rem; line-height: 1.6; color: #ccc; }
+
+        /* 3. Foreground Object Layer */
+        .layer-fg-wrap {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 3;
+            
+            /* Foreground comes from way below (moves fastest) */
+            transform: translateY(100%);
+            transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        
+        .slide.active .layer-fg-wrap { transform: translateY(0%); transition-delay: 0.1s; }
+        .slide.prev .layer-fg-wrap { transform: translateY(-100%); transition-delay: 0s; }
+
+        /* Dummy Foreground Object (Glass UI) */
+        .fg-object {
+            width: 30vw; height: 30vw; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5), inset 0 0 50px rgba(255,255,255,0.3);
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            color: white; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;
+        }
+
+        #slide-2 .fg-object { border-radius: 20px; transform: rotate(15deg); background: rgba(255, 100, 100, 0.1); border-color: rgba(255, 100, 100, 0.4); }
+        
+        .fg-inner-parallax { will-change: transform; transition: transform 0.1s ease-out; }
+
+    </style>
+    <!-- Add Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <div class="logo">O-I Slider</div>
+        <div class="menu-link">Menu</div>
+    </header>
+
+    <div class="slider-container">
+        
+        <!-- SLIDE 1 -->
+        <div class="slide active" id="slide-1">
+            <!-- Background Layer -->
+            <div class="layer-bg-wrap">
+                <div class="parallax-mouse-target" data-speed="0.02"></div>
+            </div>
+            
+            <!-- Text Layer -->
+            <div class="layer-text-wrap">
+                <div class="fg-inner-parallax" data-speed="0.04" style="text-align: center;">
+                    <div class="subtitle">GET LOST</div>
+                    <h1 class="title">in the<br>clouds</h1>
+                    <p class="desc">A buttery smooth transition engine featuring easeOutExpo timings for a truly premium feel.</p>
+                </div>
+            </div>
+            
+            <!-- Foreground Layer -->
+            <div class="layer-fg-wrap">
+                <div class="fg-inner-parallax" data-speed="0.1">
+                    <div class="fg-object">
+                        <span style="font-size: 3rem; margin-bottom: 10px;">&#10024;</span>
+                        Your Image Here
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="slide" id="slide-2">
+            <div class="layer-bg-wrap">
+                <div class="parallax-mouse-target" data-speed="0.02"></div>
+            </div>
+            
+            <div class="layer-text-wrap">
+                <div class="fg-inner-parallax" data-speed="0.04" style="text-align: center;">
+                    <div class="subtitle">DISCOVER</div>
+                    <h1 class="title">the red<br>planet</h1>
+                    <p class="desc">Notice how the background, text, and objects slide up at completely different speeds.</p>
+                </div>
+            </div>
+            
+            <div class="layer-fg-wrap">
+                <div class="fg-inner-parallax" data-speed="0.1">
+                    <div class="fg-object">
+                        <span style="font-size: 3rem; margin-bottom: 10px;">&#128640;</span>
+                        Your Image Here
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="slide" id="slide-3">
+            <div class="layer-bg-wrap">
+                <div class="parallax-mouse-target" data-speed="0.02"></div>
+            </div>
+            
+            <div class="layer-text-wrap">
+                <div class="fg-inner-parallax" data-speed="0.04" style="text-align: center;">
+                    <div class="subtitle">2026</div>
+                    <h1 class="title">a sky<br>odyssey</h1>
+                    <p class="desc">The ultimate presentation for your products or portfolio. Scroll to believe it.</p>
+                </div>
+            </div>
+            
+            <div class="layer-fg-wrap">
+                <div class="fg-inner-parallax" data-speed="0.1">
+                    <div class="fg-object" style="width: 25vw; height: 25vw; border-radius: 10px; transform: rotate(45deg);">
+                        <span style="transform: rotate(-45deg); display: block;">&#128373; PNG</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="pagination">0<span id="current-slide">1</span> / 03</div>
+        <div class="controls">
+            <div class="arrow" id="prev"><span>&#8593;</span> UP</div>
+            <div class="arrow" id="next">DOWN <span>&#8595;</span></div>
+        </div>
+        <div class="contact">CONTACT</div>
+    </footer>
+
+    <script>
+        const slides = Array.from(document.querySelectorAll('.slide'));
+        let currentIdx = 0;
+        let isAnimating = false;
+
+        // Initialize slides (first is active, rest are below)
+        function init() {
+            slides.forEach((slide, idx) => {
+                if (idx === 0) {
+                    slide.classList.add('active');
+                } else {
+                    // Default state is below (no class needed)
+                }
+            });
+        }
+        init();
+
+        function goToSlide(newIdx) {
+            if (isAnimating || newIdx === currentIdx) return;
+            isAnimating = true;
+
+            // Update classes for all slides
+            slides.forEach((slide, idx) => {
+                slide.classList.remove('active', 'prev');
+                
+                if (idx === newIdx) {
+                    // This slide comes into view
+                    slide.classList.add('active');
+                } else if (idx < newIdx) {
+                    // Slides before the current one go up (prev state)
+                    slide.classList.add('prev');
+                } else {
+                    // Slides after the current one stay down (default state)
+                }
+            });
+
+            currentIdx = newIdx;
+            document.getElementById('current-slide').innerText = currentIdx + 1;
+
+            // Wait for the 1.5s CSS transition to finish before allowing another scroll
+            setTimeout(() => {
+                isAnimating = false;
+            }, 1500);
+        }
+
+        // --- Mouse Wheel Vertical Scroll ---
+        document.addEventListener('wheel', (e) => {
+            if (isAnimating) return;
+            if (e.deltaY > 0 && currentIdx < slides.length - 1) {
+                goToSlide(currentIdx + 1);
+            } else if (e.deltaY < 0 && currentIdx > 0) {
+                goToSlide(currentIdx - 1);
+            }
+        });
+
+        // --- Click Controls ---
+        document.getElementById('next').addEventListener('click', () => {
+            if (currentIdx < slides.length - 1) goToSlide(currentIdx + 1);
+        });
+
+        document.getElementById('prev').addEventListener('click', () => {
+            if (currentIdx > 0) goToSlide(currentIdx - 1);
+        });
+
+        // --- The Mouse Parallax Effect ---
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX - window.innerWidth / 2);
+            const y = (e.clientY - window.innerHeight / 2);
+
+            const activeParallaxLayers = document.querySelectorAll('.slide.active [data-speed]');
+            
+            activeParallaxLayers.forEach(layer => {
+                const speed = layer.getAttribute('data-speed');
+                const xOffset = -(x * speed);
+                const yOffset = -(y * speed);
+                
+                layer.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+            });
+        });
+    </script>
+</body>
+</html>

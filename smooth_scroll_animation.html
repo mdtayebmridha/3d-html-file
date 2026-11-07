@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smooth Scroll Animation - Premium</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 400vh;
+            background-color: #000;
+            font-family: 'Cormorant Garamond', serif;
+            color: white;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+        }
+
+        #webgl-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Highly realistic smoke/mist effect using CSS */
+        .smoke-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            z-index: 2;
+            opacity: 0;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            will-change: opacity, transform;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .smoke-layer {
+            position: absolute;
+            width: 150vw; height: 150vh;
+            background: radial-gradient(circle, rgba(147, 51, 234, 0.4) 0%, rgba(76, 29, 149, 0.2) 30%, rgba(0,0,0,0) 70%);
+            filter: blur(60px);
+            animation: drift 20s infinite alternate ease-in-out;
+            will-change: transform;
+        }
+        .smoke-layer:nth-child(2) {
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, rgba(0,0,0,0) 60%);
+            width: 100vw; height: 100vh;
+            animation: drift 15s infinite alternate-reverse ease-in-out;
+            filter: blur(40px);
+        }
+
+        @keyframes drift {
+            0% { transform: scale(1) translate(0, 0) rotate(0deg); }
+            100% { transform: scale(1.2) translate(5%, 5%) rotate(10deg); }
+        }
+
+        /* Fixed UI Container */
+        .ui-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Hero Text */
+        .hero-title {
+            position: absolute;
+            font-size: 8vw;
+            font-weight: 300;
+            letter-spacing: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 85%;
+            will-change: transform, opacity;
+        }
+        .hero-left, .hero-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .hero-of {
+            font-family: 'Inter', sans-serif;
+            font-size: 1vw;
+            letter-spacing: 2px;
+            margin-left: 20px;
+            margin-top: 10px;
+            color: #999;
+        }
+
+        /* Small Corner Texts */
+        .corner-text {
+            position: absolute;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.6vw;
+            letter-spacing: 1px;
+            color: #777;
+            text-transform: uppercase;
+        }
+        .top-left { top: 30px; left: 40px; }
+        .top-right { top: 30px; right: 40px; }
+        .bottom-left { bottom: 30px; left: 40px; width: 200px;}
+        .bottom-right { bottom: 30px; right: 40px; text-align: right;}
+        
+        .bottom-left span { color: white; display: inline-block; margin-top: 15px; font-weight: bold;}
+
+        /* Section 2: About Text */
+        .about-text {
+            position: absolute;
+            font-family: 'Inter', sans-serif;
+            font-size: 1vw;
+            line-height: 1.8;
+            text-align: center;
+            max-width: 600px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: translateY(80px);
+            will-change: transform, opacity;
+            color: #eee;
+        }
+
+        /* Section 3: Final Text */
+        .final-title {
+            position: absolute;
+            font-size: 6vw;
+            text-align: center;
+            line-height: 1.1;
+            font-weight: 300;
+            opacity: 0;
+            transform: scale(0.9);
+            will-change: transform, opacity;
+        }
+        .final-title span {
+            font-family: 'Inter', sans-serif;
+            font-size: 1vw;
+            display: block;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+            color: #aaa;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 12vw; width: 95%; }
+            .about-text { font-size: 3vw; width: 90%; }
+            .final-title { font-size: 10vw; }
+            .corner-text { display: none; }
+            .hero-of { font-size: 2vw; }
+        }
+    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- 3D Background -->
+    <div id="webgl-container"></div>
+    
+    <!-- Purple Mist Effect -->
+    <div class="smoke-container" id="mist-overlay">
+        <div class="smoke-layer"></div>
+        <div class="smoke-layer"></div>
+    </div>
+
+    <!-- UI Elements -->
+    <div class="ui-container">
+        <!-- Corners -->
+        <div class="corner-text top-left">SCARABYNTH STUDIO</div>
+        <div class="corner-text top-right">LET'S BUILD SOMETHING EXTRAORDINARY</div>
+        <div class="corner-text bottom-left">WE TRANSCEND DIMENSIONS<br><span>GET STARTED ↘</span></div>
+        <div class="corner-text bottom-right">BUILT FOR<br>THE FUTURE</div>
+
+        <!-- Section 1 -->
+        <div class="hero-title" id="hero-title">
+            <div class="hero-left" id="hero-left">BORN <span class="hero-of">OF</span></div>
+            <div class="hero-right" id="hero-right">NATURE</div>
+        </div>
+
+        <!-- Section 2 -->
+        <div class="about-text" id="about-text">
+            Scarabynth is a creative studio at the intersection of art and technology. Inspired by the resilience and beauty of nature, we design digital experiences that captivate, innovate, and transform.
+        </div>
+
+        <!-- Section 3 -->
+        <div class="final-title" id="final-title">
+            <span>© SCARABYNTH</span>
+            BORN OF<br>MYTH
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- 1. SETUP THREE.JS SCENE ---
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 12;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        // --- 2. CREATE THE MORPHING ALIEN OBJECT ---
+        // Icosahedron with high detail allows for organic vertex manipulation
+        const geometry = new THREE.IcosahedronGeometry(2, 4);
+        
+        // Save original vertices for morphing
+        const positionAttribute = geometry.getAttribute('position');
+        const originalPositions = new Float32Array(positionAttribute.array);
+
+        // High gloss, metallic, dark material
+        const material = new THREE.MeshPhysicalMaterial({
+            color: 0x111111,
+            metalness: 1.0,
+            roughness: 0.15,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1,
+            flatShading: true // Gives that faceted, spiky jewel look
+        });
+        
+        const objectGroup = new THREE.Group();
+        const mesh = new THREE.Mesh(geometry, material);
+        objectGroup.add(mesh);
+        
+        // Add glowing center core
+        const coreGeo = new THREE.IcosahedronGeometry(0.8, 1);
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0xaa44ff, wireframe: true, transparent: true, opacity: 0.5 });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        objectGroup.add(coreMesh);
+
+        scene.add(objectGroup);
+
+        // --- 3. LIGHTING (To make it look like glossy glass/metal) ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+        scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0xffffff, 2, 50);
+        pointLight1.position.set(5, 5, 5);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0xa855f7, 3, 50); // Purple light
+        pointLight2.position.set(-5, -5, 5);
+        scene.add(pointLight2);
+
+        const pointLight3 = new THREE.PointLight(0x06b6d4, 2, 50); // Cyan light
+        pointLight3.position.set(5, -5, -5);
+        scene.add(pointLight3);
+
+        // --- 4. SCROLL ENGINE & ANIMATION LOGIC ---
+        let currentScroll = 0;
+        let targetScroll = 0;
+        window.addEventListener('scroll', () => { targetScroll = window.scrollY; });
+
+        // DOM Elements
+        const heroLeft = document.getElementById('hero-left');
+        const heroRight = document.getElementById('hero-right');
+        const heroTitle = document.getElementById('hero-title');
+        const mistOverlay = document.getElementById('mist-overlay');
+        const aboutText = document.getElementById('about-text');
+        const finalTitle = document.getElementById('final-title');
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            // Smooth Scroll Interpolation (Lerp)
+            currentScroll += (targetScroll - currentScroll) * 0.08;
+            
+            // Calculate progress 0 to 1
+            const maxScroll = document.body.offsetHeight - window.innerHeight;
+            let p = currentScroll / maxScroll;
+            if (p < 0) p = 0;
+            if (p > 1) p = 1;
+
+            // -- UI ANIMATIONS BASED ON SCROLL PROGRESS (p) --
+            
+            // Phase 1: 0.0 to 0.3 (Hero splits apart and fades out)
+            if (p <= 0.3) {
+                const phase1 = p / 0.3; // 0 to 1
+                heroLeft.style.transform = `translateX(${-phase1 * 150}px)`; // Splits further
+                heroRight.style.transform = `translateX(${phase1 * 150}px)`;
+                heroTitle.style.opacity = 1 - Math.pow(phase1, 1.5);
+            } else {
+                heroTitle.style.opacity = 0;
+            }
+
+            // Phase 2: 0.2 to 0.6 (Purple Mist + About Text fades in)
+            if (p > 0.2 && p <= 0.7) {
+                let opacity = 0;
+                let yOffset = 0;
+                
+                if (p < 0.4) {
+                    opacity = (p - 0.2) / 0.2;
+                    yOffset = 80 - (opacity * 80);
+                } else if (p < 0.5) {
+                    opacity = 1;
+                    yOffset = 0;
+                } else {
+                    opacity = 1 - ((p - 0.5) / 0.2);
+                    yOffset = -((1 - opacity) * 40);
+                }
+                
+                aboutText.style.opacity = opacity;
+                aboutText.style.transform = `translateY(${yOffset}px)`;
+                mistOverlay.style.opacity = opacity;
+                mistOverlay.style.transform = `scale(${1 + opacity * 0.1})`;
+            } else {
+                aboutText.style.opacity = 0;
+                if (p <= 0.2) mistOverlay.style.opacity = 0;
+            }
+
+            // Phase 3: 0.6 to 1.0 (Final Title fades in)
+            if (p > 0.6) {
+                const phase3 = (p - 0.6) / 0.4;
+                finalTitle.style.opacity = phase3;
+                finalTitle.style.transform = `scale(${0.9 + phase3 * 0.1})`;
+            } else {
+                finalTitle.style.opacity = 0;
+            }
+
+            // -- 3D OBJECT ANIMATIONS --
+            
+            // Organic morphing of vertices
+            const posArray = positionAttribute.array;
+            for (let i = 0; i < posArray.length; i += 3) {
+                const ox = originalPositions[i];
+                const oy = originalPositions[i+1];
+                const oz = originalPositions[i+2];
+                
+                // Creates a spikey, breathing effect
+                const noise = Math.sin(ox * 2 + elapsedTime * 2) * Math.cos(oy * 2 + elapsedTime) * 0.2;
+                
+                // Exaggerate noise based on scroll
+                const morphFactor = 1 + noise * (1 + p * 2);
+                
+                posArray[i] = ox * morphFactor;
+                posArray[i+1] = oy * morphFactor;
+                posArray[i+2] = oz * morphFactor;
+            }
+            positionAttribute.needsUpdate = true;
+            geometry.computeVertexNormals(); // Crucial for lighting the new facets!
+
+            // Base rotation over time + scroll rotation
+            objectGroup.rotation.x = elapsedTime * 0.2 + (p * Math.PI);
+            objectGroup.rotation.y = elapsedTime * 0.3 + (p * Math.PI * 2);
+            
+            // Dynamic scaling and positioning based on scroll
+            const targetScale = 1 + (p * 1.5); 
+            objectGroup.scale.set(targetScale, targetScale, targetScale);
+            
+            // Move object up slightly to make room for text in the center
+            objectGroup.position.y = p * 1.5;
+
+            // Lights orbit around
+            pointLight2.position.x = Math.sin(elapsedTime) * 5;
+            pointLight2.position.z = Math.cos(elapsedTime) * 5;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Responsive Resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>

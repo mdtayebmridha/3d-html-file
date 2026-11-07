@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exploding Car & Doll Animation</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #111;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            text-align: left;
+            padding-left: 5vw;
+        }
+
+        .section h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            text-shadow: 0px 5px 15px rgba(0,0,0,0.8);
+            background: linear-gradient(135deg, #f1c40f 0%, #e74c3c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section p {
+            font-size: 1.5rem;
+            color: #ccc;
+            letter-spacing: 2px;
+            margin-top: 10px;
+            text-shadow: 0px 2px 10px rgba(0,0,0,0.8);
+            background-color: rgba(0,0,0,0.4);
+            padding: 10px 20px;
+            border-left: 4px solid #e74c3c;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="section">
+        <h1>The Ride</h1>
+        <p>Scroll down to see the magic.</p>
+    </div>
+    <div class="section">
+        <h1>Destruction</h1>
+        <p>The car parts explode dynamically.</p>
+    </div>
+    <div class="section">
+        <h1>The Passenger</h1>
+        <p>Rising from the wreckage.</p>
+    </div>
+    <div class="section">
+        <h1>Victory Pose</h1>
+        <p>A glorious 3D finish.</p>
+    </div>
+
+    <!-- Extra scroll space so user can stay at 100% progress smoothly -->
+    <div style="height: 50vh;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x111, 0.003);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // --- Lighting ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffaa55, 1.5);
+        dirLight.position.set(20, 40, 20);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        const backLight = new THREE.DirectionalLight(0x55aaff, 1.5);
+        backLight.position.set(-20, 20, -30);
+        scene.add(backLight);
+
+        // Floor
+        const floorGeo = new THREE.PlaneGeometry(200, 200);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.1, metalness: 0.5 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const gridHelper = new THREE.GridHelper(200, 50, 0x444444, 0x222222);
+        scene.add(gridHelper);
+
+        // --- Master Group ---
+        const masterGroup = new THREE.Group();
+        scene.add(masterGroup);
+
+        // --- 1. Modular Car ---
+        const carGroup = new THREE.Group();
+        masterGroup.add(carGroup);
+
+        // Chassis
+        const chassisGeo = new THREE.BoxGeometry(12, 2, 24);
+        const chassisMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.4, metalness: 0.6 });
+        const chassis = new THREE.Mesh(chassisGeo, chassisMat);
+        chassis.position.y = 2.5;
+        chassis.castShadow = true;
+        carGroup.add(chassis);
+
+        // Cabin (Roof)
+        const cabinGeo = new THREE.BoxGeometry(8, 3, 10);
+        const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1, metalness: 0.9 });
+        const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+        cabin.position.set(0, 5, 2);
+        cabin.castShadow = true;
+        carGroup.add(cabin);
+
+        // Wheels
+        const wheelGeo = new THREE.CylinderGeometry(2.5, 2.5, 1.5, 24);
+        wheelGeo.rotateZ(Math.PI / 2);
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9 });
+        
+        const wheels = [];
+        const wheelPositions = [
+            { x: 6.5, y: 2.5, z: 8 },  // Back Right
+            { x: -6.5, y: 2.5, z: 8 }, // Back Left
+            { x: 6.5, y: 2.5, z: -8 }, // Front Right
+            { x: -6.5, y: 2.5, z: -8 } // Front Left
+        ];
+
+        wheelPositions.forEach(pos => {
+            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+            wheel.position.set(pos.x, pos.y, pos.z);
+            wheel.castShadow = true;
+            wheels.push(wheel);
+            carGroup.add(wheel);
+        });
+
+        // --- 2. The Doll (Robot / Character) ---
+        // Hidden inside the chassis initially
+        const dollGroup = new THREE.Group();
+        dollGroup.position.set(0, -5, 2); // Start hidden low inside chassis
+        masterGroup.add(dollGroup);
+
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xffddaa, roughness: 0.5 });
+        const suitMat = new THREE.MeshStandardMaterial({ color: 0x3498db, roughness: 0.7 });
+
+        // Body
+        const bodyGeo = new THREE.BoxGeometry(3, 4.5, 2);
+        const dollBody = new THREE.Mesh(bodyGeo, suitMat);
+        dollBody.position.y = 4.5;
+        dollBody.castShadow = true;
+        dollGroup.add(dollBody);
+
+        // Head
+        const headGeo = new THREE.BoxGeometry(2.5, 2.5, 2.5);
+        const dollHead = new THREE.Mesh(headGeo, skinMat);
+        dollHead.position.y = 8;
+        dollHead.castShadow = true;
+        dollGroup.add(dollHead);
+
+        // Sunglasses on head for coolness
+        const glassGeo = new THREE.BoxGeometry(2.6, 0.8, 0.5);
+        const glassMat = new THREE.MeshStandardMaterial({ color: 0x000, metalness: 1 });
+        const sunglasses = new THREE.Mesh(glassGeo, glassMat);
+        sunglasses.position.set(0, 8.2, 1.3);
+        dollGroup.add(sunglasses);
+
+        // Arms (With joint structures so they can pose)
+        const armGeo = new THREE.BoxGeometry(1.2, 4, 1.2);
+        
+        const leftArmJoint = new THREE.Group();
+        leftArmJoint.position.set(2.5, 6, 0); // Left shoulder position
+        const leftArm = new THREE.Mesh(armGeo, skinMat);
+        leftArm.position.y = -1.5; // Offset so it rotates from shoulder
+        leftArm.castShadow = true;
+        leftArmJoint.add(leftArm);
+        dollGroup.add(leftArmJoint);
+
+        const rightArmJoint = new THREE.Group();
+        rightArmJoint.position.set(-2.5, 6, 0); // Right shoulder position
+        const rightArm = new THREE.Mesh(armGeo, skinMat);
+        rightArm.position.y = -1.5;
+        rightArm.castShadow = true;
+        rightArmJoint.add(rightArm);
+        dollGroup.add(rightArmJoint);
+
+
+        // --- Scrolling & Interaction Logic ---
+        let rawProgress = 0;
+        let smoothProgress = 0; // For smooth interpolation
+
+        document.addEventListener('scroll', () => {
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            rawProgress = Math.max(0, Math.min(1, window.scrollY / maxScroll));
+        });
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Smoothly interpolate the progress so animation doesn't look jittery on mouse wheel
+            smoothProgress += (rawProgress - smoothProgress) * 0.05;
+
+            // ---- SCROLL ANIMATION PHASES ----
+
+            // Phase 1: Car Explosion (Progress 0.1 to 0.4)
+            let explodeProgress = Math.max(0, Math.min(1, (smoothProgress - 0.1) / 0.3));
+            
+            // Move cabin up and spin it
+            cabin.position.y = 5 + (explodeProgress * 25);
+            cabin.rotation.x = explodeProgress * Math.PI * 1.5;
+            cabin.rotation.z = explodeProgress * Math.PI * 0.5;
+
+            // Move chassis down/forward
+            chassis.position.y = 2.5 - (explodeProgress * 2);
+            chassis.position.z = (explodeProgress * 15);
+            chassis.rotation.x = explodeProgress * 0.5;
+
+            // Blow off wheels in 4 different directions
+            wheels[0].position.x = 6.5 + (explodeProgress * 20); // BR
+            wheels[0].position.z = 8 + (explodeProgress * 10);
+            
+            wheels[1].position.x = -6.5 - (explodeProgress * 20); // BL
+            wheels[1].position.z = 8 + (explodeProgress * 10);
+            
+            wheels[2].position.x = 6.5 + (explodeProgress * 20); // FR
+            wheels[2].position.z = -8 - (explodeProgress * 10);
+            
+            wheels[3].position.x = -6.5 - (explodeProgress * 20); // FL
+            wheels[3].position.z = -8 - (explodeProgress * 10);
+
+            // Spin wheels wildly
+            wheels.forEach(w => w.rotation.z = explodeProgress * Math.PI * 4);
+
+
+            // Phase 2: Doll Rises (Progress 0.4 to 0.7)
+            let riseProgress = Math.max(0, Math.min(1, (smoothProgress - 0.4) / 0.3));
+            
+            // Doll emerges from the base of the car
+            dollGroup.position.y = -5 + (riseProgress * 5); // Ends up standing at y=0
+            
+
+            // Phase 3: Victory Pose (Progress 0.7 to 1.0)
+            let poseProgress = Math.max(0, Math.min(1, (smoothProgress - 0.7) / 0.3));
+            
+            // Raise arms like a champion! (Rotate on Z axis)
+            leftArmJoint.rotation.z = -(Math.PI * 0.8) * poseProgress;
+            rightArmJoint.rotation.z = (Math.PI * 0.8) * poseProgress;
+            // Also rotate arms slightly forward on X axis
+            leftArmJoint.rotation.x = -(Math.PI * 0.2) * poseProgress;
+            rightArmJoint.rotation.x = -(Math.PI * 0.2) * poseProgress;
+
+            // Doll head looks up slightly
+            dollHead.rotation.x = -(Math.PI * 0.15) * poseProgress;
+
+
+            // --- Dynamic Camera ---
+            // Camera orbits around the scene as you scroll to show off the 3D depth
+            const angle = Math.PI * 0.25 + (smoothProgress * Math.PI * 1.5);
+            const camRadius = 40;
+            camera.position.x = Math.sin(angle) * camRadius;
+            camera.position.z = Math.cos(angle) * camRadius;
+            
+            // Camera lowers and looks up at the doll at the end
+            camera.position.y = 15 - (smoothProgress * 10);
+            
+            // Always focus the camera on the center where the doll is
+            camera.lookAt(0, 5, 0);
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

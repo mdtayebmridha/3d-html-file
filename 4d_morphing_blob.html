@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4D Morphing Blob</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #07070a;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .section h1 {
+            font-size: 5.5rem;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            text-shadow: 0px 5px 20px rgba(0,0,0,0.8);
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section p {
+            font-size: 1.3rem;
+            color: #ccc;
+            letter-spacing: 3px;
+            margin-top: 15px;
+            text-shadow: 0px 2px 10px rgba(0,0,0,0.8);
+            max-width: 600px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="section">
+        <h1>4D Shape</h1>
+        <p>A mathematical liquid morphing through the 4th dimension (Time)</p>
+    </div>
+    <div class="section">
+        <h1>Fluidity</h1>
+        <p>Scroll to interact with the gravitational field</p>
+    </div>
+    <div class="section">
+        <h1>Holographic</h1>
+        <p>Complex wireframe algorithms bending in real-time</p>
+    </div>
+    <div style="height: 100vh;"></div> <!-- Extra scroll space -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x07070a, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 250;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // --- 4D Morphing Blob Geometry ---
+        // Icosahedron with extremely high detail (level 30) gives us a perfect smooth sphere with thousands of vertices
+        const radius = 80;
+        const geometry = new THREE.IcosahedronGeometry(radius, 40); 
+        
+        // Save the original positions of the sphere to calculate the 4D displacement
+        const positionAttribute = geometry.getAttribute('position');
+        const vertex = new THREE.Vector3();
+        const originalPositions = [];
+        
+        for (let i = 0; i < positionAttribute.count; i++) {
+            vertex.fromBufferAttribute(positionAttribute, i);
+            originalPositions.push(vertex.clone());
+        }
+
+        // Inner Core (Solid dark blue/purple to block the back wireframes)
+        const coreMaterial = new THREE.MeshBasicMaterial({
+            color: 0x0a0a2a,
+            transparent: true,
+            opacity: 0.95
+        });
+        const coreBlob = new THREE.Mesh(geometry, coreMaterial);
+        
+        // Outer Holographic Wireframe (The visible 4D effect)
+        const wireMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00f2fe,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.25,
+            blending: THREE.AdditiveBlending
+        });
+        const wireBlob = new THREE.Mesh(geometry, wireMaterial);
+
+        // Group them together
+        const blobGroup = new THREE.Group();
+        blobGroup.add(coreBlob);
+        blobGroup.add(wireBlob);
+        scene.add(blobGroup);
+
+        // --- Add Ambient Background Particles ---
+        const particleGeo = new THREE.BufferGeometry();
+        const particleCount = 1500;
+        const particlePos = new Float32Array(particleCount * 3);
+        for(let i=0; i<particleCount*3; i++) {
+            particlePos[i] = (Math.random() - 0.5) * 800;
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+        const particleMat = new THREE.PointsMaterial({
+            color: 0x4facfe, size: 1.5, transparent: true, opacity: 0.4
+        });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+
+        // --- Interaction ---
+        let targetX = 0;
+        let targetY = 0;
+        let scrollY = window.scrollY;
+
+        document.addEventListener('mousemove', (event) => {
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+            targetX = (event.clientX - windowHalfX) * 0.05;
+            targetY = (event.clientY - windowHalfY) * 0.05;
+        });
+
+        document.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+        });
+
+        // --- Animation Loop (The 4D Magic) ---
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Time is the 4th Dimension. We use it to deform the 3D space over time.
+            // Scrolling down speeds up time and increases the mutation (chaos)
+            const scrollIntensity = 1 + (scrollY * 0.002);
+            const time = performance.now() * 0.0005 * scrollIntensity; 
+
+            // Deform the vertices of the geometry
+            for (let i = 0; i < positionAttribute.count; i++) {
+                const v = originalPositions[i];
+                
+                // 4D Mathematical Noise simulation (Interfering Sine Waves in 3D space over Time)
+                const noise = 
+                    Math.sin(v.x * 0.03 + time) * 
+                    Math.cos(v.y * 0.03 + time * 0.8) * 
+                    Math.sin(v.z * 0.03 + time * 1.2);
+                
+                // Add secondary high-frequency noise for sharp alien details
+                const noise2 = Math.cos(v.x * 0.08 - time) * Math.sin(v.z * 0.08 + time) * 0.5;
+
+                // Combine noises and multiply by scroll intensity to make it react to scroll
+                const totalDistortion = (noise + noise2) * (0.2 + (scrollY * 0.0003));
+                
+                const scalar = 1 + totalDistortion; 
+
+                // Apply new position
+                positionAttribute.setXYZ(i, v.x * scalar, v.y * scalar, v.z * scalar);
+            }
+            
+            // Tell Three.js the shape has changed
+            positionAttribute.needsUpdate = true;
+            geometry.computeVertexNormals();
+
+            // Rotate the entire blob
+            blobGroup.rotation.y += 0.002;
+            blobGroup.rotation.x += 0.001;
+            blobGroup.rotation.z += (scrollY * 0.00005); // Spin faster when scrolling
+
+            // Smooth camera panning
+            camera.position.x += (targetX - camera.position.x) * 0.05;
+            camera.position.y += (-targetY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+
+            // Slowly rotate background particles
+            particles.rotation.y -= 0.0005;
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic Cinematic Scroll</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; 
+            /* Make the body very tall so we have plenty of room to scroll */
+            height: 500vh; 
+            background-color: #000;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: white;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+        }
+
+        /* Fixed container for the video */
+        .video-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 1;
+        }
+
+        /* The actual video element */
+        #water-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Filter to give it a slightly moody, premium cinematic look */
+            filter: brightness(0.8) contrast(1.1);
+        }
+
+        /* UI Overlays */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header {
+            position: absolute;
+            top: 40px; left: 50px; right: 50px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            mix-blend-mode: difference;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            mix-blend-mode: difference;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mouse {
+            width: 25px; height: 40px;
+            border: 2px solid white;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            padding-top: 5px;
+        }
+
+        .wheel {
+            width: 4px; height: 8px;
+            background: white;
+            border-radius: 4px;
+            animation: scrollWheel 2s infinite;
+        }
+
+        @keyframes scrollWheel {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(15px); opacity: 0; }
+        }
+
+        /* Typography that fades in and out based on scroll */
+        .text-section {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .title {
+            font-size: 8vw;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            letter-spacing: 8px;
+            color: #ddd;
+            text-transform: uppercase;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="video-container">
+        <!-- Using the exact local video path provided by the user -->
+        <video id="water-video" src="file:///C:/Users/USER/Downloads/Video/Water%20Drop%20with%20original%20Sound.mp4" muted playsinline preload="auto"></video>
+    </div>
+
+    <div class="overlay">
+        <div class="header">
+            <div>O-I Cinematic</div>
+            <div>Scroll Controlled Rendering</div>
+        </div>
+
+        <!-- Dynamic Texts -->
+        <div class="text-section" id="text-1">
+            <div class="subtitle">Phase 01</div>
+            <h1 class="title">Gravity</h1>
+        </div>
+
+        <div class="text-section" id="text-2">
+            <div class="subtitle">Phase 02</div>
+            <h1 class="title">Impact</h1>
+        </div>
+        
+        <div class="text-section" id="text-3">
+            <div class="subtitle">Phase 03</div>
+            <h1 class="title">Rebound</h1>
+        </div>
+
+        <div class="scroll-indicator">
+            <span>Scroll Slowly</span>
+            <div class="mouse"><div class="wheel"></div></div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('water-video');
+        const text1 = document.getElementById('text-1');
+        const text2 = document.getElementById('text-2');
+        const text3 = document.getElementById('text-3');
+
+        // We use requestAnimationFrame to make the scrubbing buttery smooth
+        let targetTime = 0;
+        let currentTime = 0;
+        
+        // Ensure video is loaded before we can calculate duration
+        video.addEventListener('loadedmetadata', function() {
+            // Pause the video because we will control it manually with scroll
+            video.pause();
+            
+            // Start the smooth animation loop
+            requestAnimationFrame(smoothScrub);
+        });
+
+        window.addEventListener('scroll', () => {
+            // Calculate how far down the user has scrolled (0 to 1)
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            const scrollFraction = window.scrollY / maxScroll;
+            
+            // Calculate target video time based on scroll percentage
+            // If the video is 10 seconds long, scrolling 50% means target time is 5 seconds.
+            if (video.duration) {
+                targetTime = scrollFraction * video.duration;
+            }
+
+            // Handle Text Animations based on scroll fraction
+            hideAllTexts();
+            
+            if (scrollFraction > 0.1 && scrollFraction < 0.3) {
+                showText(text1); // Gravity (Drop falling)
+            } 
+            else if (scrollFraction >= 0.4 && scrollFraction < 0.6) {
+                showText(text2); // Impact (Hitting the water)
+            }
+            else if (scrollFraction >= 0.7 && scrollFraction < 0.95) {
+                showText(text3); // Rebound (Water column rising)
+            }
+        });
+
+        function hideAllTexts() {
+            [text1, text2, text3].forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(50px)';
+            });
+        }
+
+        function showText(el) {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }
+
+        // Lerp (Linear Interpolation) function for buttery smooth video scrubbing
+        function smoothScrub() {
+            // Interpolate current time towards target time
+            // The 0.08 is the easing factor. Lower = smoother/slower, Higher = faster/snappier
+            currentTime += (targetTime - currentTime) * 0.08;
+            
+            // Only update video time if there's a significant change to save performance
+            if (Math.abs(currentTime - video.currentTime) > 0.01) {
+                video.currentTime = currentTime;
+            }
+
+            requestAnimationFrame(smoothScrub);
+        }
+    </script>
+</body>
+</html>

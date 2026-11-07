@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>True Parallax Revolution Slider</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #050505;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: white;
+        }
+
+        /* --- Header & Footer UI --- */
+        header {
+            position: absolute; top: 40px; left: 40px; right: 40px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 100; mix-blend-mode: difference;
+        }
+        .logo { font-size: 1.2rem; font-weight: bold; letter-spacing: 2px; border: 2px solid white; padding: 10px 15px; }
+        .menu-link { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+        
+        footer {
+            position: absolute; bottom: 40px; left: 40px; right: 40px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 100; mix-blend-mode: difference;
+        }
+        .pagination { font-size: 1rem; letter-spacing: 2px; font-weight: bold; }
+        .controls { display: flex; gap: 30px; }
+        .controls span { cursor: pointer; font-size: 1.2rem; transition: 0.3s; opacity: 0.7; font-weight: bold;}
+        .controls span:hover { opacity: 1; transform: scale(1.2); }
+
+        /* --- The Engine --- */
+        .slider-container {
+            position: relative; width: 100%; height: 100%; overflow: hidden;
+        }
+
+        /* The main slide container */
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            transform: translateY(100%); /* Default state: below screen */
+            will-change: transform;
+        }
+
+        /* --- Parallax Layers inside the slide --- */
+        
+        /* 1. Background Image Wrapper */
+        .bg-wrap {
+            position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
+            will-change: transform;
+            transition: transform 0.1s ease-out; /* For mouse parallax */
+        }
+        
+        .bg-image {
+            width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            /* Give it a slight scale that animates down when active */
+            transform: scale(1.15);
+            transition: transform 2s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .slide.active .bg-image { transform: scale(1); }
+
+        #slide-1 .bg-image { background-image: url('https://images.unsplash.com/photo-1551244072-5d12893278ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); filter: brightness(0.7); }
+        #slide-2 .bg-image { background-image: url('https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); filter: brightness(0.6); }
+        #slide-3 .bg-image { background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); filter: brightness(0.5); }
+
+        /* 2. Text Layer */
+        .text-wrap {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; z-index: 5;
+            
+            /* Initial state for text transition */
+            opacity: 0;
+            transform: translateY(100px);
+            transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1), opacity 1.2s ease;
+        }
+        /* When slide becomes active, animate text in with a delay */
+        .slide.active .text-wrap { 
+            opacity: 1; 
+            transform: translateY(0); 
+            transition-delay: 0.4s; 
+        }
+
+        .subtitle { font-size: 1rem; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 0px; color: #ffebcd; font-weight: bold;}
+        .title { font-size: 10vw; font-weight: 900; line-height: 0.9; margin: 0; letter-spacing: -3px; }
+        .desc { margin-top: 30px; max-width: 500px; font-size: 1.1rem; line-height: 1.6; color: #eee; }
+
+        /* 3. Foreground Object Layer (The 3D Element) */
+        .fg-wrap {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 6;
+            
+            /* Initial state */
+            opacity: 0;
+            transform: translateY(150px) scale(0.9);
+            transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1), opacity 1.2s ease;
+            will-change: transform;
+        }
+        .slide.active .fg-wrap { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+            transition-delay: 0.6s; /* Comes in after text */
+        }
+
+        /* Glass Placeholder */
+        .dummy-object {
+            width: 35vw; height: 35vw; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5), inset 0 0 40px rgba(255,255,255,0.2);
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            color: white; font-size: 1.2rem; font-weight: bold; letter-spacing: 2px;
+        }
+        #slide-2 .dummy-object { border-radius: 20px; transform: rotate(15deg); background: rgba(255, 100, 100, 0.1); border-color: rgba(255, 100, 100, 0.4); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">O-I</div>
+        <div style="font-size: 0.8rem; letter-spacing: 1px; opacity: 0.6;">True Overlapping Parallax</div>
+        <div class="menu-link">ABOUT</div>
+    </header>
+
+    <div class="slider-container">
+        
+        <!-- SLIDE 1 -->
+        <div class="slide" id="slide-1">
+            <div class="bg-wrap" data-speed="0.02"><div class="bg-image"></div></div>
+            <div class="text-wrap" data-speed="0.05">
+                <div class="subtitle">GET LOST</div>
+                <h1 class="title">in the<br>clouds</h1>
+                <p class="desc">Notice how the new slide slides OVER the old one, while the old one pushes back smoothly.</p>
+            </div>
+            <div class="fg-wrap" data-speed="0.12">
+                <div class="dummy-object">Replace with PNG</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="slide" id="slide-2">
+            <div class="bg-wrap" data-speed="0.02"><div class="bg-image"></div></div>
+            <div class="text-wrap" data-speed="0.05">
+                <div class="subtitle">DISCOVER</div>
+                <h1 class="title">the red<br>planet</h1>
+                <p class="desc">The text and foreground elements float in with a delayed stagger for a cinematic reveal.</p>
+            </div>
+            <div class="fg-wrap" data-speed="0.12">
+                <div class="dummy-object">Replace with PNG</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="slide" id="slide-3">
+            <div class="bg-wrap" data-speed="0.02"><div class="bg-image"></div></div>
+            <div class="text-wrap" data-speed="0.05">
+                <div class="subtitle">2026</div>
+                <h1 class="title">a sky<br>odyssey</h1>
+                <p class="desc">This is the exact physics used in premium scrollytelling and Slider Revolution templates.</p>
+            </div>
+            <div class="fg-wrap" data-speed="0.12">
+                <div class="dummy-object" style="border-radius: 10px; width: 25vw; height: 25vw;">Replace PNG</div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="pagination">0<span id="current-slide">1</span> / 03</div>
+        <div class="controls">
+            <span id="prev">&#8593; UP</span>
+            <span id="next">DOWN &#8595;</span>
+        </div>
+    </footer>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let currentIdx = 0;
+        let isAnimating = false;
+
+        // Initialize the first slide to be visible instantly
+        slides[currentIdx].style.transform = 'translateY(0%)';
+        slides[currentIdx].classList.add('active');
+        slides[currentIdx].style.zIndex = 10;
+
+        function goToSlide(nextIdx, direction) {
+            if (isAnimating || nextIdx === currentIdx) return;
+            isAnimating = true;
+
+            const currentSlide = slides[currentIdx];
+            const nextSlide = slides[nextIdx];
+
+            // Setup the easing we want
+            const easing = 'cubic-bezier(0.77, 0, 0.175, 1)'; // Smooth easeInOut
+            const duration = '1.2s';
+
+            // Remove transitions temporarily to snap the incoming slide to its starting position
+            currentSlide.style.transition = 'none';
+            nextSlide.style.transition = 'none';
+
+            if (direction === 'down') {
+                // Scrolling down -> Next slide slides UP over the current slide
+                nextSlide.style.transform = 'translateY(100%)';
+                nextSlide.style.zIndex = 10; // Next slide is on top
+                currentSlide.style.zIndex = 1; // Current slide goes to back
+                
+                // Force reflow so CSS applies instantly
+                void nextSlide.offsetWidth;
+
+                // Re-enable transitions
+                nextSlide.style.transition = `transform ${duration} ${easing}`;
+                currentSlide.style.transition = `transform ${duration} ${easing}`;
+
+                // Trigger animation
+                nextSlide.style.transform = 'translateY(0%)'; // Slide up to view
+                currentSlide.style.transform = 'translateY(-40%)'; // Parallax push up
+                
+            } else if (direction === 'up') {
+                // Scrolling up -> Current slide slides DOWN revealing the previous slide
+                nextSlide.style.transform = 'translateY(-40%)'; // Next slide starts slightly pushed up
+                nextSlide.style.zIndex = 1; // Next slide is in back
+                currentSlide.style.zIndex = 10; // Current slide stays on top
+                
+                void nextSlide.offsetWidth;
+
+                nextSlide.style.transition = `transform ${duration} ${easing}`;
+                currentSlide.style.transition = `transform ${duration} ${easing}`;
+
+                // Trigger animation
+                nextSlide.style.transform = 'translateY(0%)'; // Next slide settles into view
+                currentSlide.style.transform = 'translateY(100%)'; // Current slide falls off bottom
+            }
+
+            // Handle internal text/object animations using the .active class
+            currentSlide.classList.remove('active');
+            nextSlide.classList.add('active');
+
+            currentIdx = nextIdx;
+            document.getElementById('current-slide').innerText = currentIdx + 1;
+
+            // Wait for transition to finish
+            setTimeout(() => {
+                isAnimating = false;
+            }, 1200);
+        }
+
+        // --- Mouse Wheel Vertical Scroll ---
+        document.addEventListener('wheel', (e) => {
+            if (isAnimating) return;
+            if (e.deltaY > 0 && currentIdx < slides.length - 1) {
+                goToSlide(currentIdx + 1, 'down');
+            } else if (e.deltaY < 0 && currentIdx > 0) {
+                goToSlide(currentIdx - 1, 'up');
+            }
+        });
+
+        // --- Click Controls ---
+        document.getElementById('next').addEventListener('click', () => {
+            if (currentIdx < slides.length - 1) goToSlide(currentIdx + 1, 'down');
+        });
+
+        document.getElementById('prev').addEventListener('click', () => {
+            if (currentIdx > 0) goToSlide(currentIdx - 1, 'up');
+        });
+
+        // --- The Parallax Mouse Move ---
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX - window.innerWidth / 2);
+            const y = (e.clientY - window.innerHeight / 2);
+
+            const activeParallaxLayers = document.querySelectorAll('.slide.active [data-speed]');
+            
+            activeParallaxLayers.forEach(layer => {
+                const speed = layer.getAttribute('data-speed');
+                const xOffset = -(x * speed);
+                const yOffset = -(y * speed);
+                
+                layer.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Slide - High Tech</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100vh;
+            background-color: #050505;
+            font-family: 'Inter', sans-serif;
+            color: #fff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Abstract Grid Background */
+        .grid-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 1;
+        }
+
+        /* Glowing Orb */
+        .glow {
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0, 255, 170, 0.15) 0%, rgba(0,0,0,0) 70%);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            filter: blur(50px);
+            animation: pulse 4s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        }
+
+        /* Main Content Container */
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .badge {
+            border: 1px solid rgba(0, 255, 170, 0.4);
+            color: #00ffaa;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            background: rgba(0, 255, 170, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .title {
+            font-size: 6vw;
+            font-weight: 900;
+            line-height: 1.1;
+            margin: 0;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+        }
+
+        .title span {
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255,255,255,0.8);
+        }
+
+        .desc {
+            margin-top: 25px;
+            max-width: 500px;
+            font-size: 1.1rem;
+            color: #a0a0a0;
+            line-height: 1.6;
+        }
+
+        .btn {
+            margin-top: 40px;
+            padding: 15px 40px;
+            background: #00ffaa;
+            color: #000;
+            font-weight: bold;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+        }
+
+        .btn:hover {
+            background: #fff;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 255, 170, 0.3);
+        }
+
+        /* Decorative Corners */
+        .corner {
+            position: absolute;
+            width: 20px; height: 20px;
+            border: 2px solid #00ffaa;
+            z-index: 10;
+        }
+        .tl { top: 40px; left: 40px; border-right: none; border-bottom: none; }
+        .tr { top: 40px; right: 40px; border-left: none; border-bottom: none; }
+        .bl { bottom: 40px; left: 40px; border-right: none; border-top: none; }
+        .br { bottom: 40px; right: 40px; border-left: none; border-top: none; }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+    <div class="glow"></div>
+
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <div class="content">
+        <div class="badge">Next Generation</div>
+        <h1 class="title">Future of<br><span>Digital Space</span></h1>
+        <p class="desc">A high-tech, cyberpunk inspired dark theme slider layout. Built for speed, designed for the future.</p>
+        <button class="btn">Explore Now</button>
+    </div>
+
+</body>
+</html>

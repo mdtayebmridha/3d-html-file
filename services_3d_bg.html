@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Animated Background - Services</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100vh;
+            background-color: #020205; /* Deep dark background */
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: white;
+        }
+
+        /* Container for the Three.js Background */
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1; /* Stays in the background */
+        }
+
+        /* Foreground Content */
+        .content {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none; /* Lets you interact with the 3D background if needed */
+            text-align: center;
+        }
+
+        .title {
+            font-size: 5rem;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(0, 242, 254, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        /* Simple Service List to show it's a services page */
+        .service-list {
+            display: flex;
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .service-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 30px;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 3D Background -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div class="content">
+        <h1 class="title">Our Services</h1>
+        <div class="subtitle">Empowering your digital future</div>
+        
+        <div class="service-list">
+            <div class="service-item">Web Development</div>
+            <div class="service-item">3D Animation</div>
+            <div class="service-item">UI/UX Design</div>
+        </div>
+    </div>
+
+    <!-- Include Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Setup Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        // Add a subtle fog so the particles fade out in the distance
+        scene.fog = new THREE.FogExp2(0x020205, 0.0015);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
+        // Position camera to look slightly down at the wave
+        camera.position.set(0, 150, 400);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // --- Create the Wavy Particle Sea ---
+        const amountX = 100; // number of particles along X axis
+        const amountZ = 100; // number of particles along Z axis
+        const separation = 20; // distance between particles
+
+        const numParticles = amountX * amountZ;
+        
+        // Geometry to hold all particles
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(numParticles * 3);
+        const scales = new Float32Array(numParticles);
+
+        let i = 0;
+        let j = 0;
+
+        for (let ix = 0; ix < amountX; ix++) {
+            for (let iz = 0; iz < amountZ; iz++) {
+                // X position
+                positions[i] = ix * separation - ((amountX * separation) / 2);
+                // Y position (will be animated later)
+                positions[i + 1] = 0;
+                // Z position
+                positions[i + 2] = iz * separation - ((amountZ * separation) / 2);
+
+                scales[j] = 1;
+
+                i += 3;
+                j++;
+            }
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
+
+        // Custom Shader Material for glowing particles
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                color: { value: new THREE.Color(0x00f2fe) }, // Cyan color
+            },
+            vertexShader: `
+                attribute float scale;
+                void main() {
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    // Point size gets smaller as it goes further away
+                    gl_PointSize = scale * (300.0 / -mvPosition.z);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 color;
+                void main() {
+                    // Make the particles circular and glowing
+                    float r = distance(gl_PointCoord, vec2(0.5));
+                    if (r > 0.5) discard;
+                    
+                    // Soft edge glow
+                    float strength = 1.0 - (r * 2.0);
+                    gl_FragColor = vec4(color, strength * 0.8);
+                }
+            `,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending // Makes overlapping particles brighter
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // --- Animation Loop ---
+        let count = 0;
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+
+        // Interactive Camera Movement based on Mouse
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - window.innerWidth / 2) * 0.1;
+            mouseY = (event.clientY - window.innerHeight / 2) * 0.1;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Smoothly move camera towards mouse
+            targetX = mouseX * 0.5;
+            targetY = mouseY * 0.5;
+            camera.position.x += (targetX - camera.position.x) * 0.05;
+            camera.position.y += (-targetY + 150 - camera.position.y) * 0.05;
+            camera.lookAt(0, 0, 0);
+
+            // Animate the waves
+            const positions = particles.geometry.attributes.position.array;
+            const scales = particles.geometry.attributes.scale.array;
+
+            let i = 0;
+            let j = 0;
+
+            for (let ix = 0; ix < amountX; ix++) {
+                for (let iz = 0; iz < amountZ; iz++) {
+                    // The core math for the beautiful 3D wave!
+                    // Combining sine and cosine waves based on X, Z positions and time (count)
+                    const waveHeight = 
+                        (Math.sin((ix + count) * 0.3) * 30) +
+                        (Math.sin((iz + count) * 0.5) * 30);
+
+                    positions[i + 1] = waveHeight;
+                    
+                    // Scale particles based on height (taller = bigger/brighter)
+                    scales[j] = (Math.sin((ix + count) * 0.3) + 1) * 8 +
+                                (Math.sin((iz + count) * 0.5) + 1) * 8;
+
+                    i += 3;
+                    j++;
+                }
+            }
+
+            particles.geometry.attributes.position.needsUpdate = true;
+            particles.geometry.attributes.scale.needsUpdate = true;
+
+            count += 0.05; // Speed of the wave
+
+            // Slowly rotate the entire particle system for a dynamic feel
+            particles.rotation.y = count * 0.01;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

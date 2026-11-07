@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artistic Vertical Parallax Slider</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: white;
+        }
+
+        /* --- UI Elements --- */
+        header {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            right: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: difference;
+        }
+        
+        .logo { font-size: 1.2rem; font-weight: bold; letter-spacing: 2px; border: 2px solid white; padding: 10px 15px; }
+        .menu-link { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+
+        footer {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: difference;
+        }
+
+        .pagination { font-size: 0.9rem; letter-spacing: 2px; width: 100px; }
+        
+        /* Arrows at the bottom center */
+        .controls {
+            display: flex;
+            gap: 40px;
+        }
+        .controls span {
+            cursor: pointer;
+            font-size: 1.5rem;
+            opacity: 0.5;
+            transition: 0.3s;
+        }
+        .controls span:hover { opacity: 1; transform: scale(1.3); }
+
+        .contact { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; text-align: right; width: 100px; }
+
+        /* --- Slider Engine (Vertical) --- */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* This wrapper moves up and down */
+        .slider-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* The cinematic vertical slide transition */
+            transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Stack slides vertically */
+        #slide-1 { top: 0%; }
+        #slide-2 { top: 100%; }
+        #slide-3 { top: 200%; }
+
+        /* --- Parallax Layers --- */
+        .layer {
+            position: absolute;
+            width: 110%; /* Slightly larger to allow for panning without seeing edges */
+            height: 110%;
+            top: -5%;
+            left: -5%;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            will-change: transform;
+            transition: transform 0.1s ease-out; /* Smooth follow for mouse */
+        }
+
+        /* Slide Backgrounds */
+        #slide-1 .bg { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+        #slide-2 .bg { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); }
+        #slide-3 .bg { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+
+        /* Typography */
+        .text-layer {
+            z-index: 2;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+            padding: 0 5%;
+            box-sizing: border-box;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: -10px;
+            opacity: 0.8;
+            transform: translateY(50px);
+            opacity: 0;
+            transition: 1s 0.5s ease;
+        }
+
+        .title {
+            font-size: 10vw;
+            font-weight: 900;
+            line-height: 0.9;
+            margin: 0;
+            letter-spacing: -2px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: 1s 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .desc {
+            margin-top: 30px;
+            max-width: 400px;
+            font-size: 1rem;
+            line-height: 1.6;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: 1s 0.9s ease;
+        }
+
+        /* Activate animations when slide comes into view */
+        .slide.active .subtitle,
+        .slide.active .title,
+        .slide.active .desc {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* The 3D Objects Placholders */
+        .fg-object {
+            z-index: 3;
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            color: #333;
+            font-weight: bold;
+        }
+
+        #slide-2 .fg-object {
+            background: radial-gradient(circle, #ff758c 0%, #ff7eb3 100%);
+            border-radius: 20px;
+            transform: rotate(15deg);
+        }
+        
+        #slide-3 .fg-object {
+            background: radial-gradient(circle, #f6d365 0%, #fda085 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 100px rgba(255, 200, 100, 0.8);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">O-I</div>
+        <div style="font-size: 0.8rem; letter-spacing: 1px; opacity: 0.6;">Vertical Parallax Engine</div>
+        <div class="menu-link">ABOUT</div>
+    </header>
+
+    <div class="slider-container">
+        <!-- Wrapper handles the Vertical sliding -->
+        <div class="slider-wrapper" id="slider-wrapper">
+            
+            <!-- SLIDE 1 -->
+            <div class="slide active" id="slide-1">
+                <div class="layer bg" data-speed="0.01"></div>
+                
+                <div class="layer text-layer" data-speed="0.04">
+                    <div class="subtitle">GET LOST</div>
+                    <h1 class="title">in the<br>clouds</h1>
+                    <p class="desc">Dream the impossible dream with this artistic parallax slider engine. Built purely with code for ultimate performance.</p>
+                </div>
+                
+                <div class="layer" data-speed="0.09" style="z-index: 3;">
+                    <!-- Replace this div with an <img src="your-transparent-car.png"> -->
+                    <div class="fg-object">Replace with PNG Image</div>
+                </div>
+            </div>
+
+            <!-- SLIDE 2 -->
+            <div class="slide" id="slide-2">
+                <div class="layer bg" data-speed="0.01"></div>
+                
+                <div class="layer text-layer" data-speed="0.04">
+                    <div class="subtitle">EXPLORE</div>
+                    <h1 class="title">to the<br>unknown</h1>
+                    <p class="desc">A WordPress parallax slider doesn't have to be boring. Bring the WOW back into modern web design.</p>
+                </div>
+                
+                <div class="layer" data-speed="0.1" style="z-index: 3; padding-right: 20vw;">
+                    <div class="fg-object">Object 2</div>
+                </div>
+            </div>
+
+            <!-- SLIDE 3 -->
+            <div class="slide" id="slide-3">
+                <div class="layer bg" data-speed="0.01"></div>
+                
+                <div class="layer text-layer" data-speed="0.04">
+                    <div class="subtitle">2026</div>
+                    <h1 class="title">a sky<br>odyssey</h1>
+                    <p class="desc">Reach for the sky and beyond by building your website's hero header with this stunning layout.</p>
+                </div>
+                
+                <div class="layer" data-speed="0.08" style="z-index: 3;">
+                    <div class="fg-object" style="width: 30vw; height: 30vw; margin-top: -10vh;">Object 3</div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <footer>
+        <div class="pagination"><span id="current-slide">01</span>-03</div>
+        
+        <div class="controls">
+            <!-- Up and Down arrows for vertical slider -->
+            <span id="prev">&#8593;</span>
+            <span id="next">&#8595;</span>
+        </div>
+        
+        <div class="contact">CONTACT</div>
+    </footer>
+
+    <script>
+        const wrapper = document.getElementById('slider-wrapper');
+        const slides = document.querySelectorAll('.slide');
+        const nextBtn = document.getElementById('next');
+        const prevBtn = document.getElementById('prev');
+        const pagination = document.getElementById('current-slide');
+        
+        let currentIdx = 0;
+        let isAnimating = false; // Prevent rapid scrolling
+
+        function updateSlider() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // --- The Vertical Slide Magic ---
+            // Move the entire wrapper up or down by 100vh times the index
+            wrapper.style.transform = `translateY(-${currentIdx * 100}%)`;
+
+            // Trigger text animations
+            slides.forEach((slide, idx) => {
+                slide.classList.remove('active');
+                if (idx === currentIdx) {
+                    slide.classList.add('active');
+                }
+            });
+            pagination.innerText = `0${currentIdx + 1}`;
+
+            // Unlock scrolling after the transition finishes (1.2 seconds to match CSS)
+            setTimeout(() => {
+                isAnimating = false;
+            }, 1200);
+        }
+
+        // --- Mouse Wheel Vertical Scroll ---
+        document.addEventListener('wheel', (e) => {
+            if (isAnimating) return;
+            
+            if (e.deltaY > 0 && currentIdx < slides.length - 1) {
+                // Scrolled down -> Go to next slide
+                currentIdx++;
+                updateSlider();
+            } else if (e.deltaY < 0 && currentIdx > 0) {
+                // Scrolled up -> Go to previous slide
+                currentIdx--;
+                updateSlider();
+            }
+        });
+
+        // Click Controls
+        nextBtn.addEventListener('click', () => {
+            if (isAnimating || currentIdx >= slides.length - 1) return;
+            currentIdx++;
+            updateSlider();
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (isAnimating || currentIdx <= 0) return;
+            currentIdx--;
+            updateSlider();
+        });
+
+        // --- The Magic Parallax Mouse Effect ---
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX - window.innerWidth / 2);
+            const y = (e.clientY - window.innerHeight / 2);
+
+            // Only animate layers in the active slide for performance
+            const activeLayers = document.querySelectorAll('.slide.active .layer');
+            
+            activeLayers.forEach(layer => {
+                const speed = layer.getAttribute('data-speed');
+                const xOffset = -(x * speed);
+                const yOffset = -(y * speed);
+                
+                layer.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+            });
+        });
+    </script>
+</body>
+</html>

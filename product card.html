@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Reveal - Scroll Animation</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: #0d0d0d;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: white;
+            /* Allow vertical scrolling */
+            overflow-x: hidden;
+            overflow-y: scroll;
+        }
+
+        /* The container that stays fixed on screen while we scroll the body */
+        .fixed-viewport {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        /* The height of the webpage determines how long we can scroll */
+        .scroll-spacer {
+            height: 400vh; /* 4 pages of scrolling */
+            width: 100%;
+            position: relative;
+            z-index: 0;
+        }
+
+        /* --- Background Layers --- */
+        .bg-layer {
+            position: absolute;
+            top: -5%;
+            left: -5%;
+            width: 110%;
+            height: 110%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+
+        /* Unsplash placeholder images matching the Figma mockup */
+        #bg-1 { background-image: url('https://images.unsplash.com/photo-1448375240586-882707db888b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); opacity: 1; filter: brightness(0.4); }
+        #bg-2 { background-image: url('https://images.unsplash.com/photo-1433086966358-54859d0ed716?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); filter: brightness(0.6); }
+        #bg-3 { background-image: url('https://images.unsplash.com/photo-1511497584788-876760111969?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); filter: brightness(0.5); }
+
+        /* --- UI Overlay --- */
+        header {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            right: 40px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 100;
+        }
+        .menu-btn { width: 30px; height: 2px; background: white; position: relative; margin-top: 15px;}
+        .menu-btn::before, .menu-btn::after { content: ''; position: absolute; width: 30px; height: 2px; background: white; }
+        .menu-btn::before { top: -8px; }
+        .menu-btn::after { top: 8px; }
+        
+        .order-btn {
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+
+        /* --- Content Layers --- */
+        .content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+            will-change: transform, opacity;
+        }
+
+        #hero-content h1 {
+            font-size: 5vw;
+            font-weight: 700;
+            margin: 0 0 20px 0;
+            letter-spacing: -1px;
+        }
+        #hero-content p {
+            font-size: 1.2vw;
+            color: #ccc;
+            max-width: 600px;
+            line-height: 1.5;
+        }
+
+        #details-content {
+            align-items: flex-start;
+            padding-left: 10vw;
+            text-align: left;
+            opacity: 0;
+            transform: translateX(-100px);
+        }
+        #details-content h2 {
+            font-size: 4vw;
+            margin: 0 0 20px 0;
+            color: #d1ffd6; /* Light green */
+        }
+        #details-content p {
+            font-size: 1.1vw;
+            color: #ddd;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        /* --- The Product (Dummy Bottle using CSS) --- */
+        .product-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            will-change: transform;
+            transform: translateY(100vh); /* Start hidden below the screen */
+        }
+
+        .dummy-bottle {
+            width: 100px;
+            height: 320px;
+            background: linear-gradient(90deg, #133a20 0%, #2f944d 30%, #46cf6e 50%, #2f944d 70%, #133a20 100%);
+            border-radius: 15px;
+            position: relative;
+            box-shadow: -10px 0 20px rgba(0,0,0,0.5) inset, 15px 15px 40px rgba(0,0,0,0.6);
+            /* To replace with real image: remove background/border and put <img src="..."> inside */
+        }
+        
+        .bottle-neck {
+            position: absolute;
+            top: -20px;
+            left: 20px;
+            width: 60px;
+            height: 20px;
+            background: linear-gradient(90deg, #133a20, #46cf6e, #133a20);
+        }
+
+        .bottle-cap {
+            position: absolute;
+            top: -50px;
+            left: 15px;
+            width: 70px;
+            height: 30px;
+            background: #1a1a1a;
+            border-radius: 5px 5px 0 0;
+            box-shadow: inset 0 5px 10px rgba(255,255,255,0.2);
+        }
+
+        .bottle-loop {
+            position: absolute;
+            top: -80px;
+            left: 20px;
+            width: 30px;
+            height: 40px;
+            border: 6px solid #1a1a1a;
+            border-radius: 50%;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Fixed viewport handles all the visual animations -->
+    <div class="fixed-viewport">
+        <!-- Backgrounds -->
+        <div class="bg-layer" id="bg-1"></div>
+        <div class="bg-layer" id="bg-2"></div>
+        <div class="bg-layer" id="bg-3"></div>
+
+        <header>
+            <div class="menu-btn"></div>
+            <div class="order-btn">Order Now</div>
+        </header>
+
+        <!-- Content 1 -->
+        <div class="content" id="hero-content">
+            <h1>Hydration, Anytime,<br>Anywhere</h1>
+            <p>Stay refreshed with our premium water bottles<br>designed for durability, style, and sustainability.</p>
+            <div class="order-btn" style="margin-top: 30px;">Order Now</div>
+        </div>
+
+        <!-- Content 2 -->
+        <div class="content" id="details-content">
+            <h2>Elevate Your<br>Hydration Game</h2>
+            <p>Meet the Green Steel Water Bottle, crafted for style, durability, and sustainability. With its sleek powder-coated finish and premium stainless steel construction.</p>
+            <div class="order-btn" style="margin-top: 30px; border-color: #46cf6e; color: #46cf6e;">Order Now</div>
+        </div>
+
+        <!-- The Product -->
+        <div class="product-wrapper" id="product-wrapper">
+            <!-- This CSS bottle is a placeholder. You can delete the divs inside and use an <img> -->
+            <div class="dummy-bottle">
+                <div class="bottle-neck"></div>
+                <div class="bottle-cap"></div>
+                <div class="bottle-loop"></div>
+                <!-- Text inside placeholder to guide the user -->
+                <div style="position:absolute; top: 50%; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px;">Replace with<br>PNG Image</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The invisible spacer that creates the scrollbar -->
+    <div class="scroll-spacer"></div>
+
+    <script>
+        // --- Smooth Scroll Logic ---
+        let currentScroll = 0;
+        let targetScroll = 0;
+
+        document.addEventListener('scroll', () => {
+            targetScroll = window.scrollY;
+        });
+
+        // DOM Elements
+        const bg1 = document.getElementById('bg-1');
+        const bg2 = document.getElementById('bg-2');
+        const bg3 = document.getElementById('bg-3');
+        const heroContent = document.getElementById('hero-content');
+        const detailsContent = document.getElementById('details-content');
+        const product = document.getElementById('product-wrapper');
+
+        function animate() {
+            // Linear interpolation (Lerp) for buttery smooth scrolling
+            currentScroll += (targetScroll - currentScroll) * 0.08;
+            
+            const vh = window.innerHeight;
+            
+            // Phase 1: 0 to 100vh (Hero zooms in, text goes up, bottle rises)
+            if (currentScroll < vh) {
+                let progress = currentScroll / vh; // 0 to 1
+                
+                // Background 1 zooms in and gets brighter
+                bg1.style.transform = `scale(${1 + (progress * 0.15)})`;
+                bg1.style.filter = `brightness(${0.4 + (progress * 0.6)})`;
+                bg1.style.opacity = 1;
+                
+                // Hero text moves up and fades out
+                heroContent.style.transform = `translateY(-${progress * 100}px)`;
+                heroContent.style.opacity = 1 - (progress * 1.5);
+                
+                // Bottle rises from bottom to center
+                product.style.transform = `translateY(${100 - (progress * 100)}vh) translateX(0vw)`;
+                
+                // Keep next phases hidden
+                bg2.style.opacity = 0;
+                detailsContent.style.opacity = 0;
+            }
+            // Phase 2: 100vh to 200vh (Background crossfade to waterfall, bottle rotates/moves slightly)
+            else if (currentScroll >= vh && currentScroll < vh * 2) {
+                let progress = (currentScroll - vh) / vh; // 0 to 1
+                
+                // Crossfade background 1 to 2
+                bg2.style.opacity = progress;
+                bg2.style.transform = `scale(${1.1 - (progress * 0.1)})`; // slight zoom out
+                
+                // Keep bottle in center, maybe add a slight floating effect
+                product.style.transform = `translateY(0vh) translateX(0vw)`;
+                
+                // Details text comes in slightly
+                detailsContent.style.opacity = 0;
+                detailsContent.style.transform = `translateX(-50px)`;
+                
+                bg3.style.opacity = 0;
+            }
+            // Phase 3: 200vh to 300vh (Bottle moves right, details text fades in, background shifts)
+            else if (currentScroll >= vh * 2) {
+                let progress = (currentScroll - (vh * 2)) / vh; // 0 to 1
+                if(progress > 1) progress = 1;
+                
+                // Crossfade background 2 to 3
+                bg3.style.opacity = progress;
+                bg3.style.transform = `scale(${1 + (progress * 0.05)})`;
+                
+                // Move bottle to the right
+                product.style.transform = `translateY(0vh) translateX(${progress * 20}vw)`;
+                
+                // Bring in Details text from the left
+                detailsContent.style.opacity = progress;
+                detailsContent.style.transform = `translateX(${0 - (1 - progress) * 100}px)`;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Start the animation loop
+        animate();
+    </script>
+</body>
+</html>

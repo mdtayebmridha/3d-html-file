@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Slide - Cinematic Galaxy</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100vh;
+            background-color: #000;
+            font-family: 'Cinzel', serif;
+            color: white;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #webgl-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+            pointer-events: none; /* Let mouse events pass through to UI if needed */
+        }
+
+        /* Overlay Text Content */
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            pointer-events: none;
+            mix-blend-mode: screen; /* Interacts beautifully with the glowing particles behind it */
+        }
+
+        .title {
+            font-size: 8vw;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            line-height: 1;
+            text-shadow: 0 10px 50px rgba(255, 255, 255, 0.5);
+        }
+
+        .subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 10px;
+            margin-top: 20px;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+        
+        .line-decorator {
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to bottom, #fff, transparent);
+            margin: 0 auto;
+            margin-bottom: 30px;
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@300&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="webgl-container"></div>
+
+    <div class="content">
+        <div class="line-decorator"></div>
+        <div class="subtitle">Enter The Void</div>
+        <h1 class="title">Stardust</h1>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 8;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        // Add additive blending tone mapping
+        renderer.toneMapping = THREE.AdditiveBlending;
+        container.appendChild(renderer.domElement);
+
+        // --- Create Galaxy Particles ---
+        const particleCount = 10000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        const color1 = new THREE.Color(0x3a0ca3); // Deep blue/purple
+        const color2 = new THREE.Color(0xf72585); // Neon pink
+        const color3 = new THREE.Color(0x4cc9f0); // Cyan
+
+        for (let i = 0; i < particleCount; i++) {
+            // Distribute particles in a swirling spherical/galaxy shape
+            const r = Math.random() * 5 + 1; // Radius
+            const theta = Math.random() * Math.PI * 2; // Angle
+            const phi = Math.acos(Math.random() * 2 - 1); // Spherical distribution
+            
+            // Add a spiral twist based on radius
+            const twist = r * 0.5;
+
+            const x = r * Math.sin(phi) * Math.cos(theta + twist);
+            const y = r * Math.sin(phi) * Math.sin(theta + twist);
+            const z = r * Math.cos(phi) * 0.5; // Flatten the Z axis slightly
+
+            positions[i*3] = x;
+            positions[i*3+1] = y;
+            positions[i*3+2] = z;
+
+            // Assign colors based on distance from center
+            let mixedColor = color1.clone();
+            if (r > 3) {
+                mixedColor.lerp(color2, Math.random());
+            } else {
+                mixedColor.lerp(color3, Math.random());
+            }
+
+            colors[i*3] = mixedColor.r;
+            colors[i*3+1] = mixedColor.g;
+            colors[i*3+2] = mixedColor.b;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        // Create a circular sprite for the particles using a canvas
+        function createCircleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 16; canvas.height = 16;
+            const context = canvas.getContext('2d');
+            const gradient = context.createRadialGradient(8, 8, 0, 8, 8, 8);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)');
+            gradient.addColorStop(1, 'rgba(255,255,255,0)');
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 16, 16);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const material = new THREE.PointsMaterial({
+            size: 0.05,
+            vertexColors: true,
+            map: createCircleTexture(),
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // --- Core Glow ---
+        const coreGeo = new THREE.SphereGeometry(1, 32, 32);
+        const coreMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.1,
+            blending: THREE.AdditiveBlending
+        });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(coreMesh);
+
+        // --- Mouse Parallax ---
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - window.innerWidth / 2) * 0.0005;
+            mouseY = (event.clientY - window.innerHeight / 2) * 0.0005;
+        });
+
+        // --- Animation Loop ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // Rotate the entire galaxy slowly
+            particles.rotation.z = time * 0.1;
+            particles.rotation.x = time * 0.05;
+            
+            // Mouse Parallax easing
+            targetX = mouseX;
+            targetY = mouseY;
+            
+            particles.rotation.y += 0.05 * (targetX - particles.rotation.y);
+            particles.rotation.x += 0.05 * (targetY - particles.rotation.x);
+            
+            // Pulse the core
+            coreMesh.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

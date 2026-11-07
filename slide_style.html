@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smooth Vertical Parallax Engine</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* No native scrollbar */
+            background-color: #000;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: white;
+        }
+
+        /* --- UI Elements --- */
+        header {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            right: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: difference;
+        }
+        
+        .logo { font-size: 1.2rem; font-weight: bold; letter-spacing: 2px; border: 2px solid white; padding: 10px 15px; }
+        .menu-link { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+
+        footer {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: difference;
+        }
+
+        .pagination { font-size: 0.9rem; letter-spacing: 2px; width: 100px; }
+        
+        .controls {
+            display: flex;
+            gap: 40px;
+        }
+        .controls span {
+            cursor: pointer;
+            font-size: 1.5rem;
+            opacity: 0.5;
+            transition: 0.3s;
+        }
+        .controls span:hover { opacity: 1; transform: scale(1.3); }
+
+        .contact { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; text-align: right; width: 100px; }
+
+        /* --- Slider Engine (Vertical) --- */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* The wrapper that handles the vertical sliding */
+        .slider-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* This is the magic transition the user wants */
+            transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Stack slides vertically */
+        #slide-1 { top: 0%; }
+        #slide-2 { top: 100%; }
+        #slide-3 { top: 200%; }
+        #slide-4 { top: 300%; }
+
+        /* --- Layers --- */
+        .layer {
+            position: absolute;
+            width: 110%; /* Larger to allow for mouse parallax */
+            height: 110%;
+            top: -5%;
+            left: -5%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            will-change: transform;
+            transition: transform 0.1s ease-out; /* Smooth follow for mouse */
+        }
+
+        .layer.bg {
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.6);
+        }
+
+        #slide-1 .bg { background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2000'); }
+        #slide-2 .bg { background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2000'); }
+        #slide-3 .bg { background-image: url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2000'); }
+        #slide-4 .bg { background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000'); }
+
+        /* Typography */
+        .text-layer {
+            z-index: 2;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            margin-bottom: 0px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: 1s 0.5s ease;
+            color: #ddd;
+        }
+
+        .title {
+            font-size: 10vw;
+            font-weight: 900;
+            line-height: 1;
+            margin: 0;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: 1s 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        /* Activate animations when slide comes into view */
+        .slide.active .subtitle,
+        .slide.active .title {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">O-I</div>
+        <div style="font-size: 0.8rem; letter-spacing: 1px; opacity: 0.6;">Scroll Down</div>
+        <div class="menu-link">ABOUT</div>
+    </header>
+
+    <div class="slider-container">
+        <!-- Wrapper handles the Vertical sliding -->
+        <div class="slider-wrapper" id="slider-wrapper">
+            
+            <!-- SLIDE 1 -->
+            <div class="slide active" id="slide-1">
+                <div class="layer bg" data-speed="0.02"></div>
+                <div class="layer text-layer" data-speed="0.06">
+                    <div class="subtitle">01 / NATURE</div>
+                    <h1 class="title">IN THE CLOUDS</h1>
+                </div>
+            </div>
+
+            <!-- SLIDE 2 -->
+            <div class="slide" id="slide-2">
+                <div class="layer bg" data-speed="0.02"></div>
+                <div class="layer text-layer" data-speed="0.06">
+                    <div class="subtitle">02 / SPACE</div>
+                    <h1 class="title">THE UNKNOWN</h1>
+                </div>
+            </div>
+
+            <!-- SLIDE 3 -->
+            <div class="slide" id="slide-3">
+                <div class="layer bg" data-speed="0.02"></div>
+                <div class="layer text-layer" data-speed="0.06">
+                    <div class="subtitle">03 / ODYSSEY</div>
+                    <h1 class="title">SKY ODYSSEY</h1>
+                </div>
+            </div>
+
+            <!-- SLIDE 4 -->
+            <div class="slide" id="slide-4">
+                <div class="layer bg" data-speed="0.02"></div>
+                <div class="layer text-layer" data-speed="0.06">
+                    <div class="subtitle">04 / TRUTH</div>
+                    <h1 class="title">BELIEVE IT</h1>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <footer>
+        <div class="pagination"><span id="current-slide">01</span>-04</div>
+        <div class="controls">
+            <span id="prev">&#8593;</span>
+            <span id="next">&#8595;</span>
+        </div>
+        <div class="contact">CONTACT</div>
+    </footer>
+
+    <script>
+        const wrapper = document.getElementById('slider-wrapper');
+        const slides = document.querySelectorAll('.slide');
+        const nextBtn = document.getElementById('next');
+        const prevBtn = document.getElementById('prev');
+        const pagination = document.getElementById('current-slide');
+        
+        let currentIdx = 0;
+        let isAnimating = false; // Prevent rapid scrolling
+
+        function updateSlider() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // Move the entire wrapper up or down by 100vh times the index
+            wrapper.style.transform = `translateY(-${currentIdx * 100}%)`;
+
+            // Trigger text animations
+            slides.forEach((slide, idx) => {
+                slide.classList.remove('active');
+                if (idx === currentIdx) {
+                    slide.classList.add('active');
+                }
+            });
+            
+            pagination.innerText = `0${currentIdx + 1}`;
+
+            // Unlock scrolling after the transition finishes (1.2 seconds to match CSS)
+            setTimeout(() => {
+                isAnimating = false;
+            }, 1200);
+        }
+
+        // --- Mouse Wheel Vertical Scroll ---
+        document.addEventListener('wheel', (e) => {
+            if (isAnimating) return;
+            
+            if (e.deltaY > 0 && currentIdx < slides.length - 1) {
+                // Scrolled down -> Go to next slide
+                currentIdx++;
+                updateSlider();
+            } else if (e.deltaY < 0 && currentIdx > 0) {
+                // Scrolled up -> Go to previous slide
+                currentIdx--;
+                updateSlider();
+            }
+        });
+
+        // Click Controls
+        nextBtn.addEventListener('click', () => {
+            if (isAnimating || currentIdx >= slides.length - 1) return;
+            currentIdx++;
+            updateSlider();
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (isAnimating || currentIdx <= 0) return;
+            currentIdx--;
+            updateSlider();
+        });
+
+        // --- Mouse Parallax Effect ---
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX - window.innerWidth / 2);
+            const y = (e.clientY - window.innerHeight / 2);
+
+            // Only animate layers in the active slide for performance
+            const activeLayers = document.querySelectorAll('.slide.active .layer');
+            
+            activeLayers.forEach(layer => {
+                const speed = layer.getAttribute('data-speed');
+                if (speed) {
+                    const xOffset = -(x * speed);
+                    const yOffset = -(y * speed);
+                    layer.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

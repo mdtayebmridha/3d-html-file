@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinematic Eclipse</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000000; /* Pure black background for drama */
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .section h1 {
+            font-size: 6rem;
+            font-weight: 300;
+            margin: 0;
+            letter-spacing: 25px;
+            text-transform: uppercase;
+            /* Cinematic gold/fire text */
+            color: #fff;
+            text-shadow: 0px 0px 20px rgba(255, 100, 0, 0.8), 0px 10px 40px rgba(255, 0, 0, 0.6);
+        }
+
+        .section p {
+            font-size: 1.2rem;
+            color: #d8a070;
+            letter-spacing: 6px;
+            margin-top: 20px;
+            text-transform: uppercase;
+            text-shadow: 0px 2px 10px rgba(0,0,0,1);
+            max-width: 600px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .section h1 { font-size: 3rem; letter-spacing: 10px; }
+            .section p { font-size: 0.9rem; letter-spacing: 3px; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="section">
+        <h1>Eclipse</h1>
+        <p>The cinematic void</p>
+    </div>
+    <div class="section">
+        <h1>Gravity</h1>
+        <p>Light cannot escape</p>
+    </div>
+    <div class="section">
+        <h1>Oblivion</h1>
+        <p>Enter the singularity</p>
+    </div>
+    <div style="height: 100vh;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // Heavy dark red/black fog for atmosphere
+        scene.fog = new THREE.FogExp2(0x000000, 0.0025);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 3000);
+        // Start a bit far away
+        camera.position.set(0, 30, 400);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        // Tone mapping makes the bright fiery lights look cinematic (HDR effect)
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.5;
+        container.appendChild(renderer.domElement);
+
+        // --- 1. The Void Sphere (Black Hole / Moon) ---
+        const sphereGeo = new THREE.SphereGeometry(60, 64, 64);
+        const sphereMat = new THREE.MeshBasicMaterial({ 
+            color: 0x000000, // Pure black
+        });
+        const blackHole = new THREE.Mesh(sphereGeo, sphereMat);
+        scene.add(blackHole);
+
+        // --- 2. The Corona / Accretion Disk (Fiery Ring) ---
+        const diskCount = 35000;
+        const diskGeo = new THREE.BufferGeometry();
+        const diskPos = new Float32Array(diskCount * 3);
+        const diskColors = new Float32Array(diskCount * 3);
+        const diskSizes = new Float32Array(diskCount);
+
+        const colorGold = new THREE.Color(0xff7700);
+        const colorRed = new THREE.Color(0x990000);
+        const colorYellow = new THREE.Color(0xffcc00);
+
+        for (let i = 0; i < diskCount; i++) {
+            // Distance from center (Inner radius 65, outer 250)
+            const radius = 62 + Math.pow(Math.random(), 2) * 180; 
+            const theta = Math.random() * Math.PI * 2;
+            
+            // Vertical thickness depends on radius (thinner at edges, thicker in middle)
+            const yDisp = (Math.random() - 0.5) * (1000 / radius);
+
+            diskPos[i * 3] = Math.cos(theta) * radius;
+            diskPos[i * 3 + 1] = yDisp;
+            diskPos[i * 3 + 2] = Math.sin(theta) * radius;
+
+            // Mix colors to create fire
+            let mixedColor;
+            if (Math.random() > 0.8) {
+                mixedColor = colorYellow; // 20% bright yellow sparks
+            } else {
+                mixedColor = colorRed.clone().lerp(colorGold, Math.random());
+            }
+
+            diskColors[i * 3] = mixedColor.r;
+            diskColors[i * 3 + 1] = mixedColor.g;
+            diskColors[i * 3 + 2] = mixedColor.b;
+
+            diskSizes[i] = Math.random() * 2.0;
+        }
+
+        diskGeo.setAttribute('position', new THREE.BufferAttribute(diskPos, 3));
+        diskGeo.setAttribute('color', new THREE.BufferAttribute(diskColors, 3));
+        diskGeo.setAttribute('size', new THREE.BufferAttribute(diskSizes, 1));
+
+        // Create glowing particle texture
+        const canvas = document.createElement('canvas');
+        canvas.width = 16;
+        canvas.height = 16;
+        const context = canvas.getContext('2d');
+        const gradient = context.createRadialGradient(8, 8, 0, 8, 8, 8);
+        gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        gradient.addColorStop(0.3, 'rgba(255,150,0,0.8)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 16, 16);
+        const texture = new THREE.CanvasTexture(canvas);
+
+        const diskMat = new THREE.PointsMaterial({
+            vertexColors: true,
+            map: texture,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            size: 2.5
+        });
+
+        const accretionDisk = new THREE.Points(diskGeo, diskMat);
+        // Tilt the disk for a cinematic angle
+        accretionDisk.rotation.x = Math.PI * 0.45;
+        accretionDisk.rotation.y = Math.PI * 0.1;
+        scene.add(accretionDisk);
+
+
+        // --- 3. Floating Embers (Foreground Dust) ---
+        const emberCount = 1000;
+        const emberGeo = new THREE.BufferGeometry();
+        const emberPos = new Float32Array(emberCount * 3);
+        const emberVel = [];
+
+        for (let i = 0; i < emberCount; i++) {
+            emberPos[i*3] = (Math.random() - 0.5) * 600;
+            emberPos[i*3+1] = (Math.random() - 0.5) * 600;
+            emberPos[i*3+2] = (Math.random() - 0.5) * 600;
+
+            emberVel.push({
+                x: (Math.random() - 0.5) * 0.5,
+                y: Math.random() * 0.8 + 0.2, // always float up
+                z: (Math.random() - 0.5) * 0.5
+            });
+        }
+        emberGeo.setAttribute('position', new THREE.BufferAttribute(emberPos, 3));
+
+        const emberMat = new THREE.PointsMaterial({
+            color: 0xffaa00,
+            size: 3,
+            map: texture,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const embers = new THREE.Points(emberGeo, emberMat);
+        scene.add(embers);
+
+
+        // --- Interaction & Scroll ---
+        let targetX = 0;
+        let targetY = 0;
+        let scrollY = window.scrollY;
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (event) => {
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+            // Cinematic slow pan
+            targetX = (event.clientX - windowHalfX) * 0.05;
+            targetY = (event.clientY - windowHalfY) * 0.05;
+        });
+
+        document.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+        });
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 1. Scroll Effect: Dramatically zoom in on the black hole
+            const targetZ = 400 - (scrollY * 0.15);
+            camera.position.z += (targetZ - camera.position.z) * 0.05;
+            
+            // Pan camera with mouse
+            camera.position.x += (targetX - camera.position.x) * 0.02;
+            camera.position.y += (-targetY - camera.position.y + 30) * 0.02; // Keep it slightly elevated
+            camera.lookAt(scene.position);
+
+            // 2. Rotate the accretion disk intensely
+            accretionDisk.rotation.z -= 0.003;
+
+            // 3. Float the embers upwards like fire dust
+            const ePos = emberGeo.attributes.position.array;
+            for(let i=0; i<emberCount; i++) {
+                ePos[i*3] += emberVel[i].x;
+                ePos[i*3+1] += emberVel[i].y;
+                ePos[i*3+2] += emberVel[i].z;
+
+                // Reset ember to bottom if it goes too high
+                if(ePos[i*3+1] > 300) {
+                    ePos[i*3+1] = -300;
+                    ePos[i*3] = (Math.random() - 0.5) * 600;
+                    ePos[i*3+2] = (Math.random() - 0.5) * 600;
+                }
+            }
+            emberGeo.attributes.position.needsUpdate = true;
+
+            // Slight pulsing of the black hole
+            const scale = 1 + Math.sin(Date.now() * 0.002) * 0.02;
+            blackHole.scale.set(scale, scale, scale);
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

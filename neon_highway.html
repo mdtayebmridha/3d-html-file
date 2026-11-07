@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Highway - Car Animation</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #020108; /* Deep dark purple-black */
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .section h1 {
+            font-size: 6rem;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            /* Cyberpunk Outrun text gradient */
+            background: linear-gradient(135deg, #ff0055 0%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 5px 20px rgba(0,0,0,0.8);
+        }
+
+        .section p {
+            font-size: 1.2rem;
+            color: #d1d1d1;
+            letter-spacing: 4px;
+            margin-top: 15px;
+            text-transform: uppercase;
+            text-shadow: 0px 2px 10px rgba(0,0,0,1);
+        }
+
+        @media (max-width: 768px) {
+            .section h1 { font-size: 3rem; letter-spacing: 8px; }
+            .section p { font-size: 0.9rem; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="section">
+        <h1>Night Drive</h1>
+        <p>Scroll down to accelerate</p>
+    </div>
+    <div class="section">
+        <h1>Hyper Speed</h1>
+        <p>Dynamic chase camera</p>
+    </div>
+    <div class="section">
+        <h1>Cyberpunk</h1>
+        <p>Endless neon highway</p>
+    </div>
+    <div style="height: 100vh;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // Heavy fog to hide the horizon and make the neon lights pop
+        scene.fog = new THREE.FogExp2(0x020108, 0.0035);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // --- Lighting ---
+        const ambientLight = new THREE.AmbientLight(0x222244, 1.5);
+        scene.add(ambientLight);
+
+        // --- Create Infinite Moving Grid (The Highway) ---
+        // A huge grid on the floor
+        const gridHelper = new THREE.GridHelper(800, 80, 0xff0055, 0x00f2fe);
+        gridHelper.position.y = 0;
+        scene.add(gridHelper);
+
+        // --- Build a Stylized Low-Poly Cyberpunk Car ---
+        const carGroup = new THREE.Group();
+
+        // 1. Main Body (Chassis)
+        const chassisGeo = new THREE.BoxGeometry(10, 2.5, 24);
+        const chassisMat = new THREE.MeshStandardMaterial({ 
+            color: 0x111111, roughness: 0.1, metalness: 0.9 
+        });
+        const chassis = new THREE.Mesh(chassisGeo, chassisMat);
+        chassis.position.y = 2.5;
+        carGroup.add(chassis);
+
+        // 2. Cabin (Top part)
+        const cabinGeo = new THREE.BoxGeometry(7.5, 2, 10);
+        const cabinMat = new THREE.MeshStandardMaterial({ 
+            color: 0x050505, roughness: 0.0, metalness: 1.0 // Glossy windows
+        });
+        const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+        cabin.position.set(0, 4.75, 2);
+        carGroup.add(cabin);
+
+        // 3. Wheels
+        const wheelGeo = new THREE.CylinderGeometry(2, 2, 1.5, 16);
+        wheelGeo.rotateZ(Math.PI / 2); // Lay cylinders flat to act like wheels
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x020202, roughness: 0.9 });
+        
+        const wheelPositions = [
+            [5.5, 2, 8],   // Back Right
+            [-5.5, 2, 8],  // Back Left
+            [5.5, 2, -7],  // Front Right
+            [-5.5, 2, -7]  // Front Left
+        ];
+
+        wheelPositions.forEach(pos => {
+            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+            wheel.position.set(...pos);
+            carGroup.add(wheel);
+        });
+
+        // 4. Taillights (Glowing Red) - Facing the camera
+        const backLightGeo = new THREE.BoxGeometry(3, 0.5, 0.5);
+        const backLightMat = new THREE.MeshBasicMaterial({ color: 0xff0033 }); // Neon Red
+        
+        const tl1 = new THREE.Mesh(backLightGeo, backLightMat);
+        tl1.position.set(3, 3.5, 12); // Back right
+        const tl2 = new THREE.Mesh(backLightGeo, backLightMat);
+        tl2.position.set(-3, 3.5, 12); // Back left
+        carGroup.add(tl1, tl2);
+
+        // 5. Headlights (Glowing Cyan) - Facing away
+        const frontLightGeo = new THREE.BoxGeometry(2, 0.5, 0.5);
+        const frontLightMat = new THREE.MeshBasicMaterial({ color: 0x00ffff }); // Neon Cyan
+        
+        const hl1 = new THREE.Mesh(frontLightGeo, frontLightMat);
+        hl1.position.set(3.5, 3.2, -12);
+        const hl2 = new THREE.Mesh(frontLightGeo, frontLightMat);
+        hl2.position.set(-3.5, 3.2, -12);
+        carGroup.add(hl1, hl2);
+
+        // Headlight beams (SpotLights pointing forward)
+        const createSpotlight = (x) => {
+            const spotLight = new THREE.SpotLight(0x00ffff, 2, 200, Math.PI/4, 0.5, 1);
+            spotLight.position.set(x, 3.2, -12);
+            spotLight.target.position.set(x, 0, -100);
+            carGroup.add(spotLight);
+            carGroup.add(spotLight.target);
+        };
+        createSpotlight(3.5);
+        createSpotlight(-3.5);
+
+        scene.add(carGroup);
+
+        // --- Flying Streetlights / Passing blocks ---
+        const blocks = new THREE.Group();
+        const blockGeo = new THREE.BoxGeometry(2, 20, 2);
+        const blockMat = new THREE.MeshBasicMaterial({ color: 0xff0055, transparent: true, opacity: 0.8 });
+        
+        for (let i = 0; i < 40; i++) {
+            const block = new THREE.Mesh(blockGeo, blockMat);
+            // Place them on the sides of the road
+            const side = Math.random() > 0.5 ? 1 : -1;
+            block.position.x = (30 + Math.random() * 50) * side;
+            block.position.y = 10;
+            block.position.z = -Math.random() * 800; // Spread out far ahead
+            blocks.add(block);
+        }
+        scene.add(blocks);
+
+        // --- Interaction & Scroll ---
+        let targetX = 0;
+        let scrollY = window.scrollY;
+        
+        // Base Camera Position (Chase Cam)
+        const baseCamX = 0;
+        const baseCamY = 12;
+        const baseCamZ = 35; // Behind the car
+
+        camera.position.set(baseCamX, baseCamY, baseCamZ);
+
+        document.addEventListener('mousemove', (event) => {
+            const windowHalfX = window.innerWidth / 2;
+            // Mouse slightly pans the camera left/right
+            targetX = (event.clientX - windowHalfX) * 0.02;
+        });
+
+        document.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+        });
+
+        // --- Animation Loop ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            // 1. Move Grid (The road) to simulate speed
+            const speed = 150 + (scrollY * 0.2); // Scrolling makes the car drive faster!
+            gridHelper.position.z += speed * delta;
+            
+            // Loop the grid seamlessly (grid spacing is 10)
+            if (gridHelper.position.z > 10) {
+                gridHelper.position.z -= 10;
+            }
+
+            // 2. Move passing blocks (streetlights)
+            blocks.children.forEach(block => {
+                block.position.z += speed * delta;
+                if (block.position.z > 50) { // If it passes the camera
+                    block.position.z = -800; // Send it far back
+                }
+            });
+
+            // 3. Car suspension animation (bouncing slightly)
+            const time = Date.now() * 0.005;
+            carGroup.position.y = Math.sin(time) * 0.1;
+
+            // 4. Scroll Camera Dynamics
+            // As you scroll down, camera drops lower and gets closer to the car for dramatic effect
+            const scrollZoom = scrollY * 0.01;
+            const camTargetZ = baseCamZ - scrollZoom;
+            const camTargetY = Math.max(4, baseCamY - (scrollY * 0.005)); // Don't go below road
+            
+            camera.position.z += (camTargetZ - camera.position.z) * 0.1;
+            camera.position.y += (camTargetY - camera.position.y) * 0.1;
+            camera.position.x += ((targetX) - camera.position.x) * 0.1;
+            
+            camera.lookAt(carGroup.position.x, carGroup.position.y + 3, carGroup.position.z - 20);
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

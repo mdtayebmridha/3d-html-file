@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abstract Core - Scroll Animation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            background-color: #030014;
+            font-family: 'Inter', sans-serif;
+            color: white;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .section h1 {
+            font-size: 5rem;
+            font-weight: 300;
+            margin: 0;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            text-shadow: 0px 4px 15px rgba(0,0,0,0.8);
+        }
+        .section p {
+            font-size: 1.2rem;
+            color: #aaa;
+            letter-spacing: 3px;
+            margin-top: 20px;
+            max-width: 600px;
+            text-shadow: 0px 2px 10px rgba(0,0,0,0.8);
+        }
+        @media (max-width: 768px) {
+            .section h1 { font-size: 3rem; letter-spacing: 5px; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div class="section">
+        <h1>The Core</h1>
+        <p>Scroll down to dive inside</p>
+    </div>
+    <div class="section">
+        <h1>Spin</h1>
+        <p>The abstract torus reacts to your depth</p>
+    </div>
+    <div class="section">
+        <h1>Immersion</h1>
+        <p>A seamless 3D experience</p>
+    </div>
+    <div style="height: 50vh;"></div>
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030014, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const baseZ = 40;
+        camera.position.z = baseZ;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // --- Starfield Particles ---
+        const particleCount = 4000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        const color1 = new THREE.Color(0x00f2fe);
+        const color2 = new THREE.Color(0x9b51e0);
+
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            const r = 80 + Math.random() * 200;
+            const theta = Math.random() * 2 * Math.PI;
+            const phi = Math.acos(Math.random() * 2 - 1);
+            
+            positions[i] = r * Math.sin(phi) * Math.cos(theta);
+            positions[i + 1] = r * Math.sin(phi) * Math.sin(theta);
+            positions[i + 2] = r * Math.cos(phi);
+
+            const mixRatio = Math.random();
+            const mixedColor = color1.clone().lerp(color2, mixRatio);
+            colors[i] = mixedColor.r;
+            colors[i + 1] = mixedColor.g;
+            colors[i + 2] = mixedColor.b;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 16;
+        canvas.height = 16;
+        const context = canvas.getContext('2d');
+        const gradient = context.createRadialGradient(8, 8, 0, 8, 8, 8);
+        gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 16, 16);
+        const texture = new THREE.CanvasTexture(canvas);
+
+        const particleMaterial = new THREE.PointsMaterial({
+            size: 1.5,
+            vertexColors: true,
+            map: texture,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const particles = new THREE.Points(geometry, particleMaterial);
+        scene.add(particles);
+
+        // --- Abstract Core Object (Torus Knot) ---
+        const coreGeometry = new THREE.TorusKnotGeometry(10, 2.5, 200, 32);
+        const coreMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x00f2fe, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.15,
+            blending: THREE.AdditiveBlending
+        });
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        scene.add(core);
+
+        const coreGeometry2 = new THREE.TorusKnotGeometry(9.5, 2.8, 100, 16);
+        const coreMaterial2 = new THREE.MeshBasicMaterial({ 
+            color: 0x9b51e0, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.1,
+            blending: THREE.AdditiveBlending
+        });
+        const core2 = new THREE.Mesh(coreGeometry2, coreMaterial2);
+        scene.add(core2);
+
+        // --- Mouse & Scroll Interaction ---
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        let scrollY = window.scrollY;
+
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - windowHalfX) * 0.05;
+            mouseY = (event.clientY - windowHalfY) * 0.05;
+        });
+
+        document.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+        });
+
+        // --- Animation Loop ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // Rotate starfield
+            particles.rotation.y += 0.001;
+            particles.rotation.x += 0.0005;
+
+            // SCROLL EFFECT: Rotate abstract core wildly based on scroll
+            const scrollRotation = scrollY * 0.002;
+            core.rotation.x = time * 0.2 + scrollRotation;
+            core.rotation.y = time * 0.3 + scrollRotation;
+            
+            core2.rotation.x = -time * 0.15 - scrollRotation;
+            core2.rotation.y = -time * 0.25 - scrollRotation;
+
+            // SCROLL EFFECT: Camera zooms into the core
+            const targetZ = baseZ - (scrollY * 0.025);
+            camera.position.z += (targetZ - camera.position.z) * 0.05;
+
+            // Smooth camera follow mouse
+            targetX = mouseX;
+            targetY = mouseY;
+            
+            camera.position.x += (targetX - camera.position.x) * 0.02;
+            camera.position.y += (-targetY - camera.position.y) * 0.02;
+            camera.lookAt(scene.position);
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toothless Interactive Eyes</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100vh;
+            background-color: #030303;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            /* Subtle scaly texture background mask */
+            background-image: radial-gradient(circle at center, transparent 0%, #000 70%), url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.05"/%3E%3C/svg%3E');
+        }
+
+        /* Container holding both eyes */
+        .dragon-face {
+            display: flex;
+            gap: 80px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* The Eye Sockets (dark area around the eyes) */
+        .eye-socket {
+            position: relative;
+            width: 160px;
+            height: 90px;
+            /* Creates the almond/dragon eye shape */
+            border-radius: 80% 20% 80% 20% / 80% 20% 80% 20%;
+            background: linear-gradient(135deg, #a8ff1a, #2b8000);
+            box-shadow: 
+                0 0 30px rgba(100, 255, 0, 0.4),
+                inset 0 0 20px rgba(0, 0, 0, 0.8),
+                inset 10px 10px 20px rgba(255, 255, 255, 0.4);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Blinking animation */
+            animation: blink 6s infinite;
+        }
+
+        /* Mirror the right eye so the inner corners match */
+        .eye-right {
+            border-radius: 20% 80% 20% 80% / 20% 80% 20% 80%;
+        }
+
+        /* The white highlight in the eye */
+        .eye-socket::after {
+            content: '';
+            position: absolute;
+            top: 15px; left: 30px;
+            width: 20px; height: 10px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            transform: rotate(-30deg);
+            filter: blur(2px);
+            z-index: 5;
+        }
+        
+        .eye-right::after {
+            left: auto; right: 30px;
+            transform: rotate(30deg);
+        }
+
+        /* The pupil (black slit) */
+        .pupil {
+            position: absolute;
+            width: 25px;
+            height: 75px;
+            background: #000;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.9);
+            transition: transform 0.1s ease-out, width 0.3s ease;
+            z-index: 2;
+        }
+
+        /* Blinking Animation */
+        @keyframes blink {
+            0%, 96%, 98%, 100% { transform: scaleY(1); }
+            97% { transform: scaleY(0.1); }
+        }
+
+        /* Overlay Instructions */
+        .overlay {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="dragon-face" id="face">
+        <!-- Left Eye -->
+        <div class="eye-socket eye-left">
+            <div class="pupil" id="pupil-left"></div>
+        </div>
+        
+        <!-- Right Eye -->
+        <div class="eye-socket eye-right">
+            <div class="pupil" id="pupil-right"></div>
+        </div>
+    </div>
+
+    <div class="overlay">
+        Move your mouse to look around
+    </div>
+
+    <script>
+        const pupilL = document.getElementById('pupil-left');
+        const pupilR = document.getElementById('pupil-right');
+        const face = document.getElementById('face');
+
+        document.addEventListener('mousemove', (e) => {
+            // Get mouse position
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+
+            // Get center points of the eyes
+            const rectL = pupilL.parentElement.getBoundingClientRect();
+            const centerX_L = rectL.left + rectL.width / 2;
+            const centerY_L = rectL.top + rectL.height / 2;
+
+            const rectR = pupilR.parentElement.getBoundingClientRect();
+            const centerX_R = rectR.left + rectR.width / 2;
+            const centerY_R = rectR.top + rectR.height / 2;
+
+            // Calculate angles
+            const angleL = Math.atan2(mouseY - centerY_L, mouseX - centerX_L);
+            const angleR = Math.atan2(mouseY - centerY_R, mouseX - centerX_R);
+
+            // Distance from center limits how far the pupil can move (max radius)
+            const maxDistance = 25; 
+
+            // Calculate new positions
+            const moveX_L = Math.cos(angleL) * maxDistance;
+            const moveY_L = Math.sin(angleL) * (maxDistance * 0.5); // Less vertical movement due to almond shape
+
+            const moveX_R = Math.cos(angleR) * maxDistance;
+            const moveY_R = Math.sin(angleR) * (maxDistance * 0.5);
+
+            // Apply transforms
+            pupilL.style.transform = `translate(${moveX_L}px, ${moveY_L}px)`;
+            pupilR.style.transform = `translate(${moveX_R}px, ${moveY_R}px)`;
+
+            // --- Pupil Dilation Logic ---
+            // If mouse is close to the center of the screen, pupils dilate (get wider)
+            // If mouse is far, pupils constrict (get narrower like a cat)
+            const screenCenterX = window.innerWidth / 2;
+            const screenCenterY = window.innerHeight / 2;
+            const distFromCenter = Math.sqrt(Math.pow(mouseX - screenCenterX, 2) + Math.pow(mouseY - screenCenterY, 2));
+            const maxDist = Math.sqrt(Math.pow(screenCenterX, 2) + Math.pow(screenCenterY, 2));
+            
+            // Map distance to pupil width (narrow far away, wide close up)
+            // Normal width is 25px, max is 45px, min is 15px
+            let dilation = 45 - (distFromCenter / maxDist) * 30;
+            if(dilation < 15) dilation = 15;
+            
+            pupilL.style.width = `${dilation}px`;
+            pupilR.style.width = `${dilation}px`;
+            
+            // Add a slight 3D tilt to the whole face based on mouse position
+            const rotateY = ((mouseX / window.innerWidth) - 0.5) * 20;
+            const rotateX = ((mouseY / window.innerHeight) - 0.5) * -20;
+            face.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg)`;
+        });
+
+        // Reset when mouse leaves
+        document.addEventListener('mouseleave', () => {
+            pupilL.style.transform = `translate(0px, 0px)`;
+            pupilR.style.transform = `translate(0px, 0px)`;
+            pupilL.style.width = `25px`;
+            pupilR.style.width = `25px`;
+            face.style.transform = `perspective(1000px) rotateY(0deg) rotateX(0deg)`;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Slide - Liquid Aurora</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100vh;
+            background-color: #030303;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* The Mesmerizing Fluid Gradient */
+        .aurora-container {
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            z-index: 1;
+            /* Filter creates the liquid effect */
+            filter: blur(60px);
+            animation: rotateBg 20s infinite linear;
+            pointer-events: none;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            animation: blobShape 15s infinite alternate ease-in-out;
+            mix-blend-mode: screen;
+        }
+
+        .blob-1 {
+            width: 600px; height: 600px;
+            background: #ff2a5f;
+            top: 40%; left: 40%;
+            animation-delay: 0s;
+        }
+        .blob-2 {
+            width: 800px; height: 500px;
+            background: #6a00ff;
+            top: 30%; left: 60%;
+            animation-delay: -5s;
+        }
+        .blob-3 {
+            width: 700px; height: 700px;
+            background: #00d2ff;
+            top: 60%; left: 30%;
+            animation-delay: -10s;
+        }
+
+        @keyframes rotateBg {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes blobShape {
+            0% { transform: scale(1) translate(0, 0) rotate(0deg); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+            100% { transform: scale(1.5) translate(10%, 10%) rotate(45deg); border-radius: 60% 40% 30% 70% / 60% 50% 40% 50%; }
+        }
+
+        /* Dark Overlay to make the colors deep and rich */
+        .dark-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(3,3,3,0.3) 0%, #030303 90%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism UI */
+        .glass-card {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 80px 100px;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .title {
+            font-size: 5rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            margin: 0;
+            background: linear-gradient(180deg, #fff 0%, #aaa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #ccc;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+        
+        .pill {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 20px;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.1);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="aurora-container">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    
+    <div class="dark-overlay"></div>
+
+    <div class="glass-card">
+        <div class="pill">Design Excellence</div>
+        <h1 class="title">Ethereal</h1>
+        <p class="subtitle">Liquid gradients meet premium glassmorphism.</p>
+    </div>
+
+</body>
+</html>

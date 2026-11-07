@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wormhole - Scroll Animation</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #020005;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        /* Fixed 3D Background */
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* Scrollable Website Sections */
+        .section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        .section h1 {
+            font-size: 6rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: 10px;
+            text-transform: uppercase;
+            text-shadow: 0px 5px 20px rgba(0,0,0,0.8);
+            /* Cyberpunk Text Gradient */
+            background: linear-gradient(135deg, #f857a6 0%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .section p {
+            font-size: 1.5rem;
+            color: #ddd;
+            letter-spacing: 3px;
+            margin-top: 15px;
+            text-shadow: 0px 2px 10px rgba(0,0,0,0.8);
+        }
+
+        /* Responsive Text */
+        @media (max-width: 768px) {
+            .section h1 { font-size: 3.5rem; letter-spacing: 5px; }
+            .section p { font-size: 1rem; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="section">
+        <h1>Initiate</h1>
+        <p>Scroll down to enter the wormhole</p>
+    </div>
+    <div class="section">
+        <h1>Accelerate</h1>
+        <p>The deeper you scroll, the faster you travel</p>
+    </div>
+    <div class="section">
+        <h1>Quantum Realm</h1>
+        <p>A spectacular 3D scrolling experience</p>
+    </div>
+    <div class="section">
+        <h1>Singularity</h1>
+        <p>Welcome to the core</p>
+    </div>
+    <!-- Extra empty height to allow scrolling even further past the last text -->
+    <div style="height: 200vh;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // Fog to hide the end of the tunnel smoothly
+        scene.fog = new THREE.FogExp2(0x020005, 0.0012);
+
+        // Wide FOV (85) for an immersive speed-effect
+        const camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 1, 3000);
+        const tunnelLength = 8000;
+        const startZ = tunnelLength / 2;
+        camera.position.z = startZ;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // --- Create the Particle Tunnel (Wormhole) ---
+        const particleCount = 12000; // Lots of particles for a dense tunnel
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        const radius = 60;
+        const color1 = new THREE.Color(0xf857a6); // Neon Pink
+        const color2 = new THREE.Color(0x00f2fe); // Neon Cyan
+
+        for (let i = 0; i < particleCount; i++) {
+            // Random angle to wrap around the tunnel
+            const theta = Math.random() * Math.PI * 2;
+            // Random position along the Z axis (depth of the tunnel)
+            const z = (Math.random() - 0.5) * tunnelLength;
+            
+            // Add noise to the radius so it's not a perfect cylinder (looks organic)
+            const noise = (Math.random() * 30) - 15;
+            const r = radius + noise;
+
+            positions[i * 3] = Math.cos(theta) * r;     // X
+            positions[i * 3 + 1] = Math.sin(theta) * r; // Y
+            positions[i * 3 + 2] = z;                   // Z
+
+            // Color gradient along the length of the tunnel
+            const mixRatio = (z + (tunnelLength / 2)) / tunnelLength; 
+            const mixedColor = color1.clone().lerp(color2, mixRatio + (Math.random() * 0.4 - 0.2));
+            
+            colors[i * 3] = mixedColor.r;
+            colors[i * 3 + 1] = mixedColor.g;
+            colors[i * 3 + 2] = mixedColor.b;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        // Create a soft glowing circle texture
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 32;
+        const context = canvas.getContext('2d');
+        const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+        gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 32, 32);
+        const texture = new THREE.CanvasTexture(canvas);
+
+        const material = new THREE.PointsMaterial({
+            size: 2.5,
+            vertexColors: true,
+            map: texture,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending, // Makes colors incredibly bright when they overlap
+            depthWrite: false
+        });
+
+        const tunnel = new THREE.Points(geometry, material);
+        scene.add(tunnel);
+
+        // --- Scroll and Mouse Interaction ---
+        let targetX = 0;
+        let targetY = 0;
+        let scrollY = window.scrollY;
+
+        document.addEventListener('mousemove', (event) => {
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+            // Mouse pans the camera slightly inside the tunnel
+            targetX = (event.clientX - windowHalfX) * 0.03;
+            targetY = (event.clientY - windowHalfY) * 0.03;
+        });
+
+        document.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+        });
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 1. SCROLL EFFECT: Move camera down the Z axis
+            // Multiply scrollY by a large number so scrolling a little moves the camera a lot (Speed effect)
+            const targetZ = startZ - (scrollY * 2.0); 
+            
+            // Smoothly interpolate the camera's Z position
+            camera.position.z += (targetZ - camera.position.z) * 0.08;
+
+            // 2. MOUSE EFFECT: Pan camera slightly X and Y
+            camera.position.x += (targetX - camera.position.x) * 0.05;
+            camera.position.y += (-targetY - camera.position.y) * 0.05;
+
+            // 3. TUNNEL ROTATION: Slowly rotate the entire tunnel
+            tunnel.rotation.z += 0.0015;
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

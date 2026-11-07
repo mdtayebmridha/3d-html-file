@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Crimson Monolith - Pure Drama</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #030000;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .section h1 {
+            font-size: 7rem;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: 20px;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 0px 0px 30px rgba(255, 0, 50, 1), 0px 10px 50px rgba(255, 0, 0, 0.8);
+        }
+
+        .section p {
+            font-size: 1.5rem;
+            color: #ff9999;
+            letter-spacing: 5px;
+            margin-top: 20px;
+            text-transform: uppercase;
+            text-shadow: 0px 2px 10px rgba(0,0,0,1);
+            max-width: 800px;
+        }
+
+        @media (max-width: 768px) {
+            .section h1 { font-size: 3.5rem; letter-spacing: 10px; }
+            .section p { font-size: 1rem; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="section">
+        <h1>Awakening</h1>
+        <p>The colossal structure</p>
+    </div>
+    <div class="section">
+        <h1>Ascension</h1>
+        <p>Rise through the crimson storm</p>
+    </div>
+    <div class="section">
+        <h1>The Core</h1>
+        <p>A pure cinematic nightmare</p>
+    </div>
+    <div style="height: 100vh;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        
+        // Deep, terrifying red/black fog
+        scene.fog = new THREE.FogExp2(0x050000, 0.004);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
+        // Start very low, looking up like a human looking at a skyscraper
+        const baseCamY = 2;
+        const baseCamZ = 120;
+        camera.position.set(0, baseCamY, baseCamZ);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
+        container.appendChild(renderer.domElement);
+
+        // --- Lighting ---
+        const ambientLight = new THREE.AmbientLight(0x220000, 1.0); // Dim red ambient
+        scene.add(ambientLight);
+
+        // Lightning Flash (PointLight)
+        const flashLight = new THREE.PointLight(0xffffff, 0, 800, 2);
+        scene.add(flashLight);
+
+        // Under-lighting to make the object look massive and evil
+        const underLight = new THREE.DirectionalLight(0xff0022, 2);
+        underLight.position.set(0, -50, 50);
+        scene.add(underLight);
+
+        // --- The Environment ---
+        // Mirrored black glass floor (Stormy dark water)
+        const floorGeo = new THREE.PlaneGeometry(2000, 2000);
+        const floorMat = new THREE.MeshStandardMaterial({ 
+            color: 0x010000, 
+            roughness: 0.05, 
+            metalness: 1.0 
+        });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+
+        // --- The Colossal Monolith (Octahedron Core) ---
+        const coreGroup = new THREE.Group();
+        
+        // Main solid geometric core
+        const coreGeo = new THREE.OctahedronGeometry(45, 0);
+        const coreMat = new THREE.MeshStandardMaterial({ 
+            color: 0x000000,
+            emissive: 0x220000,
+            roughness: 0.1, 
+            metalness: 0.9,
+            flatShading: true
+        });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        coreGroup.add(coreMesh);
+
+        // Outer glowing wireframe
+        const wireMat = new THREE.MeshBasicMaterial({ 
+            color: 0xff0022, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        const wireMesh = new THREE.Mesh(coreGeo, wireMat);
+        wireMesh.scale.set(1.05, 1.05, 1.05); // Slightly larger than solid core
+        coreGroup.add(wireMesh);
+
+        // Smaller inner core that spins backwards
+        const innerGeo = new THREE.OctahedronGeometry(20, 0);
+        const innerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+        const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+        coreGroup.add(innerMesh);
+
+        coreGroup.position.y = 80; // Float high in the sky
+        scene.add(coreGroup);
+
+
+        // --- Crimson Rain / Storm Particles ---
+        const rainCount = 20000;
+        const rainGeo = new THREE.BufferGeometry();
+        const rainPos = new Float32Array(rainCount * 3);
+        const rainVel = [];
+
+        for(let i=0; i<rainCount; i++) {
+            rainPos[i*3] = (Math.random() - 0.5) * 600;
+            rainPos[i*3+1] = Math.random() * 400; // start height
+            rainPos[i*3+2] = (Math.random() - 0.5) * 600;
+            
+            rainVel.push(2 + Math.random() * 3); // Fall speed
+        }
+        rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+        
+        const rainMat = new THREE.PointsMaterial({
+            color: 0xff1133, 
+            size: 1.5, 
+            transparent: true, 
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+        const rain = new THREE.Points(rainGeo, rainMat);
+        scene.add(rain);
+
+
+        // --- Scroll & Mouse Interaction ---
+        let targetX = 0;
+        let targetY = 0;
+        let scrollY = window.scrollY;
+
+        document.addEventListener('mousemove', (event) => {
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+            targetX = (event.clientX - windowHalfX) * 0.05;
+            targetY = (event.clientY - windowHalfY) * 0.05;
+        });
+
+        document.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+        });
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 1. Core Rotation (Ominous floating)
+            const time = Date.now() * 0.001;
+            coreGroup.rotation.y = time * 0.2;
+            coreGroup.position.y = 80 + Math.sin(time) * 5; // Bobbing up and down
+            innerMesh.rotation.y = -time * 0.5; // Inner spins opposite
+            innerMesh.rotation.z = time * 0.3;
+
+            // 2. Heavy Rain physics
+            const rPos = rainGeo.attributes.position.array;
+            for(let i=0; i<rainCount; i++) {
+                rPos[i*3+1] -= rainVel[i]; // Fall down
+                
+                // If it hits the floor, reset to sky
+                if(rPos[i*3+1] < 0) {
+                    rPos[i*3+1] = 400; 
+                }
+            }
+            rainGeo.attributes.position.needsUpdate = true;
+
+            // 3. Lightning Flash Logic (Intense drama)
+            // 2% chance to trigger a massive flash, or if a flash is currently decaying
+            if(Math.random() > 0.98 || flashLight.intensity > 0.1) {
+                if(flashLight.intensity < 0.1) {
+                    // Trigger new lightning bolt position
+                    flashLight.position.set(
+                        (Math.random() - 0.5) * 300,
+                        100 + Math.random() * 100,
+                        (Math.random() - 0.5) * 200 - 50
+                    );
+                    flashLight.intensity = 100 + Math.random() * 200; // Extreme burst
+                }
+                // Decay the flash quickly
+                flashLight.intensity *= 0.85; 
+            }
+
+            // 4. Scroll Camera Dynamics (Cinematic reveal)
+            // Start looking up from the ground. Scroll causes camera to pan up and zoom out.
+            const targetCamY = baseCamY + (scrollY * 0.1);
+            const targetCamZ = baseCamZ + (scrollY * 0.05); // Pull back to reveal scale
+            
+            camera.position.y += (targetCamY - camera.position.y) * 0.05;
+            camera.position.z += (targetCamZ - camera.position.z) * 0.05;
+            
+            // Mouse pan
+            camera.position.x += (targetX - camera.position.x) * 0.05;
+            
+            // Camera always looks at the center of the colossal object
+            camera.lookAt(coreGroup.position.x, coreGroup.position.y, coreGroup.position.z);
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

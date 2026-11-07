@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NOVA — Premium Digital Projects Marketplace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050507;
+  --bg2:#0a0a12;
+  --ink:#f5f5f7;
+  --ink2:#a1a1aa;
+  --line:rgba(255,255,255,.08);
+  --glass:rgba(255,255,255,.04);
+  --glass2:rgba(255,255,255,.06);
+  --border:rgba(255,255,255,.1);
+  --accent:#7c5cff;
+  --accent2:#22d3ee;
+  --pink:#ff5ca8;
+  --grad:linear-gradient(135deg,#7c5cff 0%,#22d3ee 50%,#ff5ca8 100%);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;scroll-behavior:smooth}
+body{min-height:100vh;position:relative}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+img{max-width:100%;display:block}
+::selection{background:rgba(124,92,255,.4);color:#fff}
+
+/* Aurora background */
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(120px);opacity:.55;mix-blend-mode:screen;will-change:transform}
+.blob.b1{width:520px;height:520px;background:#7c5cff;top:-120px;left:-120px;animation:float1 22s ease-in-out infinite}
+.blob.b2{width:480px;height:480px;background:#22d3ee;top:30%;right:-160px;animation:float2 26s ease-in-out infinite}
+.blob.b3{width:420px;height:420px;background:#ff5ca8;bottom:-160px;left:20%;animation:float3 30s ease-in-out infinite}
+.blob.b4{width:380px;height:380px;background:#3b82f6;top:55%;left:40%;opacity:.35;animation:float4 34s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(80px,60px) scale(1.15)}}
+@keyframes float2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-100px,40px) scale(1.2)}}
+@keyframes float3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(60px,-80px) scale(1.1)}}
+@keyframes float4{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-60px,-40px) scale(.95)}}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* layout */
+.wrap{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0 28px}
+section{position:relative;z-index:2}
+
+/* Navbar */
+.nav{position:fixed;top:18px;left:0;right:0;z-index:50;display:flex;justify-content:center;pointer-events:none;transition:all .4s ease}
+.nav-inner{pointer-events:auto;display:flex;align-items:center;gap:8px;padding:10px 12px 10px 22px;background:rgba(15,15,22,.55);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border:1px solid var(--border);border-radius:999px;box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;letter-spacing:-.02em}
+.logo-mark{width:24px;height:24px;border-radius:7px;background:var(--grad);box-shadow:0 4px 14px rgba(124,92,255,.5);position:relative;overflow:hidden}
+.logo-mark::after{content:"";position:absolute;inset:4px;border-radius:4px;background:var(--bg)}
+.logo-mark::before{content:"";position:absolute;inset:7px;border-radius:3px;background:var(--grad)}
+.nav-links{display:flex;gap:2px;margin:0 6px}
+.nav-links a{padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:500;color:var(--ink2);transition:all .25s ease}
+.nav-links a:hover{color:var(--ink);background:var(--glass2)}
+.btn-cta{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;background:#fff;color:#000;font-size:13px;font-weight:600;transition:all .3s ease;position:relative;overflow:hidden}
+.btn-cta::before{content:"";position:absolute;inset:0;background:var(--grad);opacity:0;transition:opacity .3s ease}
+.btn-cta span{position:relative;z-index:1}
+.btn-cta:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,255,255,.2)}
+.btn-cta:hover::before{opacity:1}
+.btn-cta:hover span{color:#fff}
+@media(max-width:760px){.nav-links{display:none}}
+
+/* HERO */
+.hero{padding:160px 0 80px;position:relative;min-height:100vh;display:flex;align-items:center}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:center;width:100%}
+@media(max-width:980px){.hero-grid{grid-template-columns:1fr;gap:40px}}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:999px;font-size:12.5px;color:var(--ink2);font-weight:500;margin-bottom:28px}
+.eyebrow-dot{width:18px;height:18px;border-radius:50%;background:var(--grad);position:relative;display:flex;align-items:center;justify-content:center}
+.eyebrow-dot::after{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+h1.head{font-family:'Space Grotesk',sans-serif;font-size:clamp(48px,7vw,88px);line-height:.95;letter-spacing:-.04em;font-weight:600;margin-bottom:24px;position:relative}
+h1.head .rot{position:relative;display:inline-block;min-width:8ch;height:1.05em;vertical-align:bottom;overflow:visible}
+.rot-word{position:absolute;left:0;top:0;white-space:nowrap;opacity:0;transform:translateY(60px) skewY(8deg);filter:blur(8px);transition:all .7s cubic-bezier(.7,0,.3,1);background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.rot-word.on{opacity:1;transform:translateY(0) skewY(0);filter:blur(0)}
+.rot-word.out{opacity:0;transform:translateY(-60px) skewY(-8deg);filter:blur(8px)}
+h1.head .static{color:var(--ink)}
+.lead{font-size:18px;line-height:1.55;color:var(--ink2);max-width:520px;margin-bottom:36px}
+.cta-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;padding:16px 26px;border-radius:14px;background:#fff;color:#000;font-weight:600;font-size:15px;transition:all .3s ease;position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(255,255,255,.1)}
+.btn-primary::before{content:"";position:absolute;inset:0;background:var(--grad);opacity:0;transition:opacity .4s ease}
+.btn-primary span{position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(124,92,255,.4)}
+.btn-primary:hover::before{opacity:1}
+.btn-primary:hover span{color:#fff}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;padding:16px 24px;border-radius:14px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);font-weight:500;font-size:15px;transition:all .3s ease}
+.btn-ghost:hover{background:var(--glass2);border-color:rgba(255,255,255,.18);transform:translateY(-2px)}
+.play{width:20px;height:20px;border-radius:50%;background:var(--grad);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:9px;padding-left:1px}
+
+.hero-trust{display:flex;align-items:center;gap:24px;margin-top:48px;flex-wrap:wrap}
+.avatars{display:flex}
+.av{width:34px;height:34px;border-radius:50%;border:2px solid var(--bg);background-size:cover;background-position:center;margin-left:-8px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.av:first-child{margin-left:0}
+.av.a1{background:linear-gradient(135deg,#7c5cff,#3b82f6)}
+.av.a2{background:linear-gradient(135deg,#22d3ee,#10b981)}
+.av.a3{background:linear-gradient(135deg,#ff5ca8,#f59e0b)}
+.av.a4{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+.av.a5{background:linear-gradient(135deg,#06b6d4,#7c5cff)}
+.trust-text{font-size:13px;color:var(--ink2);line-height:1.4}
+.trust-text strong{color:var(--ink);font-weight:600}
+.stars{color:#fbbf24;font-size:12px;letter-spacing:1px}
+
+/* HERO visual */
+.hero-vis{position:relative;height:560px;perspective:1500px}
+.hv-card{position:absolute;background:rgba(20,20,30,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:24px;box-shadow:0 30px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);overflow:hidden}
+.hv-card::after{content:"";position:absolute;inset:0;border-radius:24px;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,0) 50%,rgba(124,92,255,.2));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.hv-1{width:300px;top:0;right:0;transform:rotate(6deg) translateZ(40px);animation:floatA 7s ease-in-out infinite}
+.hv-2{width:280px;top:120px;left:0;transform:rotate(-4deg) translateZ(60px);animation:floatB 8s ease-in-out infinite}
+.hv-3{width:320px;bottom:0;right:40px;transform:rotate(2deg) translateZ(20px);animation:floatC 9s ease-in-out infinite}
+@keyframes floatA{0%,100%{transform:rotate(6deg) translateY(0) translateZ(40px)}50%{transform:rotate(6deg) translateY(-14px) translateZ(40px)}}
+@keyframes floatB{0%,100%{transform:rotate(-4deg) translateY(0) translateZ(60px)}50%{transform:rotate(-4deg) translateY(16px) translateZ(60px)}}
+@keyframes floatC{0%,100%{transform:rotate(2deg) translateY(0) translateZ(20px)}50%{transform:rotate(2deg) translateY(-10px) translateZ(20px)}}
+.hv-thumb{height:140px;background:linear-gradient(135deg,#1a1a2e,#0f0f1a);position:relative;overflow:hidden}
+.hv-thumb::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,rgba(124,92,255,.4),transparent 50%),radial-gradient(circle at 70% 70%,rgba(34,211,238,.3),transparent 50%)}
+.hv-thumb.t2::before{background:radial-gradient(circle at 30% 30%,rgba(255,92,168,.4),transparent 50%),radial-gradient(circle at 70% 70%,rgba(245,158,11,.3),transparent 50%)}
+.hv-thumb.t3::before{background:radial-gradient(circle at 30% 30%,rgba(16,185,129,.4),transparent 50%),radial-gradient(circle at 70% 70%,rgba(59,130,246,.3),transparent 50%)}
+.hv-thumb-shape{position:absolute;width:120px;height:120px;border-radius:30px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);top:20px;right:20px;transform:rotate(15deg)}
+.hv-body{padding:18px}
+.hv-tag{display:inline-block;padding:3px 9px;background:rgba(124,92,255,.15);border:1px solid rgba(124,92,255,.3);border-radius:6px;font-size:10px;font-weight:600;color:#a78bfa;margin-bottom:10px;letter-spacing:.04em}
+.hv-tag.t2{background:rgba(255,92,168,.15);border-color:rgba(255,92,168,.3);color:#f9a8d4}
+.hv-tag.t3{background:rgba(34,211,238,.15);border-color:rgba(34,211,238,.3);color:#67e8f9}
+.hv-title{font-weight:600;font-size:15px;margin-bottom:4px}
+.hv-meta{font-size:12px;color:var(--ink2);display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.hv-price{font-weight:700;color:var(--ink);font-size:15px}
+.hv-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:4px;box-shadow:0 0 8px #22c55e}
+
+/* Marquee */
+.marquee{padding:60px 0;overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.mq-track{display:flex;gap:60px;animation:scroll 40s linear infinite;width:max-content}
+.mq-item{display:flex;align-items:center;gap:14px;font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:600;letter-spacing:-.02em;color:var(--ink2);white-space:nowrap;transition:color .3s ease}
+.mq-item:hover{color:var(--ink)}
+.mq-item svg{width:28px;height:28px;opacity:.7}
+.mq-dot{width:8px;height:8px;border-radius:50%;background:var(--grad);flex-shrink:0}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* Section heading */
+.s-head{text-align:center;margin-bottom:60px;max-width:720px;margin-left:auto;margin-right:auto}
+.s-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:500;color:var(--ink2);margin-bottom:20px;letter-spacing:.04em;text-transform:uppercase}
+.s-tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.s-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(36px,5vw,56px);line-height:1.02;letter-spacing:-.03em;font-weight:600;margin-bottom:18px}
+.s-title .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.s-sub{font-size:17px;color:var(--ink2);line-height:1.55}
+
+/* Reveal animation */
+.reveal{opacity:0;transform:translateY(40px);transition:all .9s cubic-bezier(.2,.7,.2,1)}
+.reveal.in,.no-js .reveal{opacity:1;transform:translateY(0)}
+.reveal-l{opacity:0;transform:translateX(-60px);transition:all .9s cubic-bezier(.2,.7,.2,1)}
+.reveal-l.in,.no-js .reveal-l{opacity:1;transform:translateX(0)}
+.reveal-r{opacity:0;transform:translateX(60px);transition:all .9s cubic-bezier(.2,.7,.2,1)}
+.reveal-r.in,.no-js .reveal-r{opacity:1;transform:translateX(0)}
+.reveal-s{opacity:0;transform:scale(.9);transition:all .9s cubic-bezier(.2,.7,.2,1)}
+.reveal-s.in,.no-js .reveal-s{opacity:1;transform:scale(1)}
+.delay-1{transition-delay:.1s}
+.delay-2{transition-delay:.2s}
+.delay-3{transition-delay:.3s}
+.delay-4{transition-delay:.4s}
+.delay-5{transition-delay:.5s}
+.delay-6{transition-delay:.6s}
+</style>
+<noscript><style>.reveal,.reveal-l,.reveal-r,.reveal-s{opacity:1!important;transform:none!important}</style></noscript>
+</head>
+<body>
+<script>document.documentElement.classList.add('js');</script>
+<div class="aurora">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="blob b4"></div>
+</div>
+<div class="grain"></div>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#"><span class="logo-mark"></span> NOVA</a>
+    <div class="nav-links">
+      <a href="#projects">Projects</a>
+      <a href="#categories">Categories</a>
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#reviews">Reviews</a>
+    </div>
+    <a class="btn-cta" href="#projects"><span>Start selling →</span></a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow reveal"><span class="eyebrow-dot"></span> New: AI-ready project templates are live</div>
+        <h1 class="head reveal delay-1">
+          <span class="static">Buy & sell</span><br>
+          <span class="rot" id="rot">
+            <span class="rot-word on">premium</span>
+            <span class="rot-word">stunning</span>
+            <span class="rot-word">production</span>
+            <span class="rot-word">launch-ready</span>
+          </span><br>
+          <span class="static">digital projects.</span>
+        </h1>
+        <p class="lead reveal delay-2">A curated marketplace of source code, templates, design systems and AI tools — built by independent creators, vetted by our team, delivered instantly.</p>
+        <div class="cta-row reveal delay-3">
+          <a class="btn-primary" href="#projects"><span>Browse marketplace <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span></a>
+          <a class="btn-ghost" href="#how"><span class="play">▶</span> Watch demo</a>
+        </div>
+        <div class="hero-trust reveal delay-4">
+          <div class="avatars">
+            <div class="av a1"></div><div class="av a2"></div><div class="av a3"></div><div class="av a4"></div><div class="av a5"></div>
+          </div>
+          <div class="trust-text">
+            <div class="stars">★★★★★</div>
+            <strong>12,400+ creators</strong> shipped last month
+          </div>
+        </div>
+      </div>
+      <div class="hero-vis reveal-r">
+        <div class="hv-card hv-1">
+          <div class="hv-thumb"><div class="hv-thumb-shape"></div></div>
+          <div class="hv-body">
+            <span class="hv-tag">DESIGN SYSTEM</span>
+            <div class="hv-title">Aurora UI Kit v3.2</div>
+            <div class="hv-meta"><span style="color:var(--ink2)">by @nova.lab</span><span class="hv-price">$89</span></div>
+          </div>
+        </div>
+        <div class="hv-card hv-2">
+          <div class="hv-thumb t2"><div class="hv-thumb-shape"></div></div>
+          <div class="hv-body">
+            <span class="hv-tag t2">NEXT.JS</span>
+            <div class="hv-title">SaaS Starter Pro</div>
+            <div class="hv-meta"><span><span class="hv-dot"></span>Live</span><span class="hv-price">$149</span></div>
+          </div>
+        </div>
+        <div class="hv-card hv-3">
+          <div class="hv-thumb t3"><div class="hv-thumb-shape"></div></div>
+          <div class="hv-body">
+            <span class="hv-tag t3">MOBILE</span>
+            <div class="hv-title">Lumen — iOS 27 Concept</div>
+            <div class="hv-meta"><span style="color:var(--ink2)">by @mattrr</span><span class="hv-price">$59</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="marquee reveal">
+  <div class="mq-track" id="mq"></div>
+</div>
+
+<!-- PROJECTS -->
+<section class="projects" id="projects" style="padding:120px 0;position:relative">
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-tag reveal">Featured</div>
+      <h2 class="s-title reveal delay-1">Hand-picked projects<br><span class="g">ready to ship today.</span></h2>
+      <p class="s-sub reveal delay-2">Battle-tested, fully documented, and licensed for commercial use. Save weeks of dev time.</p>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:48px" class="reveal delay-3">
+      <button class="chip on" data-cat="all">All <span>248</span></button>
+      <button class="chip" data-cat="web">Web Apps <span>82</span></button>
+      <button class="chip" data-cat="mobile">Mobile <span>47</span></button>
+      <button class="chip" data-cat="ai">AI & ML <span>34</span></button>
+      <button class="chip" data-cat="design">Design <span>61</span></button>
+      <button class="chip" data-cat="saas">SaaS <span>24</span></button>
+    </div>
+
+    <div class="grid" id="grid">
+      <!-- cards injected by JS -->
+    </div>
+
+    <div style="text-align:center;margin-top:56px" class="reveal">
+      <a class="btn-ghost" href="#" style="padding:18px 28px"><span>Load 200+ more projects <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span></a>
+    </div>
+  </div>
+</section>
+
+<style>
+.chip{padding:10px 18px;background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:999px;font-size:13.5px;font-weight:500;color:var(--ink2);display:inline-flex;align-items:center;gap:8px;transition:all .3s ease}
+.chip span{font-size:11px;padding:2px 7px;background:rgba(255,255,255,.06);border-radius:999px;color:var(--ink2)}
+.chip:hover{color:var(--ink);border-color:rgba(255,255,255,.2)}
+.chip.on{background:#fff;color:#000;border-color:#fff}
+.chip.on span{background:rgba(0,0,0,.1);color:#000}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+@media(max-width:980px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+
+.card{position:relative;background:rgba(20,20,28,.55);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid var(--border);border-radius:24px;overflow:hidden;transition:all .4s cubic-bezier(.2,.7,.2,1);cursor:pointer;transform-style:preserve-3d}
+.card::after{content:"";position:absolute;inset:0;border-radius:24px;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,0) 40%,rgba(124,92,255,.18));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.6;transition:opacity .4s ease}
+.card:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.2);box-shadow:0 30px 60px rgba(0,0,0,.4)}
+.card:hover::after{opacity:1}
+.card:hover .c-thumb .c-glow{transform:scale(1.15)}
+.card:hover .c-arrow{transform:translate(4px,-4px);background:#fff;color:#000}
+.c-thumb{height:220px;position:relative;overflow:hidden;background:#0a0a12}
+.c-glow{position:absolute;inset:-20%;transition:transform .8s ease;filter:blur(40px);opacity:.8}
+.c-thumb-shape{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.c-shape{width:100px;height:100px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);position:relative;transform:rotate(-12deg);transition:transform .6s ease}
+.c-shape::after{content:"";position:absolute;inset:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+.card:hover .c-shape{transform:rotate(0deg) scale(1.1)}
+.c-thumb-g1{background:radial-gradient(circle,#7c5cff,transparent 60%)}
+.c-thumb-g2{background:radial-gradient(circle,#22d3ee,transparent 60%)}
+.c-thumb-g3{background:radial-gradient(circle,#ff5ca8,transparent 60%)}
+.c-thumb-g4{background:radial-gradient(circle,#10b981,transparent 60%)}
+.c-thumb-g5{background:radial-gradient(circle,#f59e0b,transparent 60%)}
+.c-thumb-g6{background:radial-gradient(circle,#3b82f6,transparent 60%)}
+.c-fav{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.4);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .3s ease;z-index:3}
+.c-fav:hover{background:rgba(255,92,168,.3);border-color:rgba(255,92,168,.4);transform:scale(1.1)}
+.c-fav.on{background:rgba(255,92,168,.4);border-color:#ff5ca8}
+.c-badge{position:absolute;top:14px;left:14px;padding:5px 10px;background:rgba(0,0,0,.4);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:8px;font-size:11px;font-weight:600;letter-spacing:.04em;z-index:3}
+.c-badge.bestseller{background:rgba(245,158,11,.2);border-color:rgba(245,158,11,.4);color:#fbbf24}
+.c-badge.new{background:rgba(34,211,238,.2);border-color:rgba(34,211,238,.4);color:#67e8f9}
+.c-body{padding:20px}
+.c-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.c-tag{padding:3px 9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:6px;font-size:10.5px;font-weight:500;color:var(--ink2);letter-spacing:.03em}
+.c-title{font-size:17px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px;line-height:1.3}
+.c-desc{font-size:13px;color:var(--ink2);line-height:1.5;margin-bottom:16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.c-foot{display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid var(--line)}
+.c-author{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink2)}
+.c-author .av2{width:24px;height:24px;border-radius:50%;background-size:cover}
+.c-price-row{display:flex;align-items:center;gap:10px}
+.c-price{font-weight:700;font-size:18px;font-family:'Space Grotesk',sans-serif}
+.c-old{font-size:13px;color:var(--ink2);text-decoration:line-through;opacity:.6}
+.c-arrow{width:32px;height:32px;border-radius:10px;background:var(--glass2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .3s ease;color:var(--ink)}
+</style>
+
+<!-- CATEGORIES SLIDE -->
+<section id="categories" style="padding:80px 0 120px;position:relative;overflow:hidden">
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-tag reveal">Explore</div>
+      <h2 class="s-title reveal delay-1">Every kind of project<br><span class="g">in one place.</span></h2>
+    </div>
+  </div>
+  <div class="cats-wrap reveal">
+    <div class="cats-track" id="cats">
+      <!-- cat cards injected -->
+    </div>
+  </div>
+</section>
+
+<style>
+.cats-wrap{overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);padding:20px 0 40px}
+.cats-track{display:flex;gap:20px;padding:0 28px;width:max-content;animation:catsScroll 60s linear infinite}
+.cats-track:hover{animation-play-state:paused}
+@keyframes catsScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.cat-card{flex-shrink:0;width:280px;height:340px;background:rgba(20,20,28,.5);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:24px;padding:28px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;transition:all .4s ease;position:relative;overflow:hidden}
+.cat-card::before{content:"";position:absolute;width:200px;height:200px;border-radius:50%;filter:blur(60px);opacity:.4;top:-50px;right:-50px;transition:all .5s ease}
+.cat-card.c1::before{background:#7c5cff}
+.cat-card.c2::before{background:#22d3ee}
+.cat-card.c3::before{background:#ff5ca8}
+.cat-card.c4::before{background:#10b981}
+.cat-card.c5::before{background:#f59e0b}
+.cat-card.c6::before{background:#3b82f6}
+.cat-card.c7::before{background:#ec4899}
+.cat-card.c8::before{background:#8b5cf6}
+.cat-card:hover{transform:translateY(-6px) scale(1.02);border-color:rgba(255,255,255,.25)}
+.cat-card:hover::before{transform:scale(1.4);opacity:.6}
+.cat-icon{width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:24px;backdrop-filter:blur(20px)}
+.cat-name{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px}
+.cat-count{font-size:13px;color:var(--ink2)}
+.cat-arrow{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;align-self:flex-end;transition:all .3s ease}
+.cat-card:hover .cat-arrow{background:#fff;color:#000;transform:rotate(-45deg)}
+</style>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="padding:120px 0;position:relative">
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-tag reveal">Process</div>
+      <h2 class="s-title reveal delay-1">From discovery to deployment<br><span class="g">in three steps.</span></h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal delay-1">
+        <div class="step-num">01</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </div>
+        <h3 class="step-title">Discover</h3>
+        <p class="step-desc">Filter by stack, license and price. Preview live demos and inspect the source before you buy.</p>
+        <div class="step-pill">24 categories</div>
+      </div>
+      <div class="step reveal delay-2">
+        <div class="step-num">02</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <h3 class="step-title">Purchase</h3>
+        <p class="step-desc">One-tap checkout. Get instant access to source files, docs and lifetime updates via your inbox.</p>
+        <div class="step-pill">14-day refund</div>
+      </div>
+      <div class="step reveal delay-3">
+        <div class="step-num">03</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 2 3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7Z"/></svg>
+        </div>
+        <h3 class="step-title">Ship</h3>
+        <p class="step-desc">Use it as a starter, a reference, or a launchpad. Built to be extended — never locked in.</p>
+        <div class="step-pill">MIT friendly</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:20px}
+@media(max-width:860px){.steps{grid-template-columns:1fr}}
+.step{position:relative;background:rgba(20,20,28,.5);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:24px;padding:32px;transition:all .4s ease;overflow:hidden}
+.step::after{content:"";position:absolute;inset:0;border-radius:24px;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,0));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.step:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.22);box-shadow:0 24px 50px rgba(0,0,0,.4)}
+.step-num{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;color:var(--ink2);letter-spacing:.1em;margin-bottom:24px;display:flex;align-items:center;gap:8px}
+.step-num::before{content:"";width:24px;height:1px;background:var(--ink2)}
+.step-icon{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,rgba(124,92,255,.15),rgba(34,211,238,.15));border:1px solid rgba(124,92,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.step-icon svg{width:26px;height:26px;color:#a78bfa}
+.step:nth-child(2) .step-icon{background:linear-gradient(135deg,rgba(34,211,238,.15),rgba(16,185,129,.15));border-color:rgba(34,211,238,.2)}
+.step:nth-child(2) .step-icon svg{color:#67e8f9}
+.step:nth-child(3) .step-icon{background:linear-gradient(135deg,rgba(255,92,168,.15),rgba(245,158,11,.15));border-color:rgba(255,92,168,.2)}
+.step:nth-child(3) .step-icon svg{color:#f9a8d4}
+.step-title{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;letter-spacing:-.02em;margin-bottom:10px}
+.step-desc{font-size:14.5px;color:var(--ink2);line-height:1.55;margin-bottom:24px}
+.step-pill{display:inline-block;padding:6px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;font-size:11.5px;font-weight:500;color:var(--ink2);letter-spacing:.03em}
+</style>
+
+<!-- SLIDE SHOWCASE -->
+<section style="padding:120px 0;position:relative;overflow:hidden">
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-tag reveal">Spotlight</div>
+      <h2 class="s-title reveal delay-1">Editor's pick<br><span class="g">this week.</span></h2>
+      <p class="s-sub reveal delay-2">Hand-selected by our editorial team. Premium quality, beautiful design, ready to drop into your stack.</p>
+    </div>
+  </div>
+  <div class="showcase reveal">
+    <div class="sc-track" id="sc"></div>
+  </div>
+</section>
+
+<style>
+.showcase{overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);padding:20px 0}
+.sc-track{display:flex;gap:24px;padding:0 28px;width:max-content;animation:scScroll 50s linear infinite}
+.showcase:hover .sc-track{animation-play-state:paused}
+@keyframes scScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.sc-card{flex-shrink:0;width:480px;background:rgba(20,20,28,.6);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:28px;overflow:hidden;transition:all .4s ease;cursor:pointer}
+@media(max-width:640px){.sc-card{width:340px}}
+.sc-card:hover{transform:translateY(-6px) scale(1.01);border-color:rgba(255,255,255,.2)}
+.sc-thumb{height:280px;position:relative;overflow:hidden;background:#0a0a12}
+.sc-thumb .c-glow{filter:blur(60px);opacity:.7}
+.sc-info{padding:24px}
+.sc-info-top{display:flex;justify-content:space-between;align-items:start;margin-bottom:8px}
+.sc-name{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.02em}
+.sc-cat{font-size:12px;color:var(--ink2);margin-bottom:16px}
+.sc-price-row{display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid var(--line)}
+.sc-stats{display:flex;gap:14px;font-size:12px;color:var(--ink2)}
+.sc-stat{display:flex;align-items:center;gap:4px}
+.sc-stat svg{width:14px;height:14px}
+</style>
+
+<!-- STATS -->
+<section style="padding:80px 0">
+  <div class="wrap">
+    <div class="stats reveal">
+      <div class="stat">
+        <div class="stat-num" data-target="24800">0</div>
+        <div class="stat-lbl">Projects shipped</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat">
+        <div class="stat-num" data-target="12400">0</div>
+        <div class="stat-lbl">Active creators</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat">
+        <div class="stat-num" data-target="1840000" data-prefix="$">0</div>
+        <div class="stat-lbl">Paid out to sellers</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat">
+        <div class="stat-num" data-target="99" data-suffix="%">0</div>
+        <div class="stat-lbl">Buyer satisfaction</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.stats{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:20px;align-items:center;padding:48px;background:rgba(20,20,28,.5);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:32px;position:relative;overflow:hidden}
+.stats::before{content:"";position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,255,.2),transparent 70%);top:-200px;left:-100px;filter:blur(40px)}
+@media(max-width:860px){.stats{grid-template-columns:1fr 1fr;gap:30px}.stat-sep{display:none}}
+.stat{text-align:center;position:relative;z-index:1}
+.stat-num{font-family:'Space Grotesk',sans-serif;font-size:clamp(36px,4.5vw,52px);font-weight:600;letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:10px}
+.stat-lbl{font-size:13.5px;color:var(--ink2);font-weight:500}
+.stat-sep{width:1px;height:60px;background:var(--line)}
+</style>
+
+<!-- PRICING -->
+<section id="pricing" style="padding:120px 0;position:relative">
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-tag reveal">Pricing</div>
+      <h2 class="s-title reveal delay-1">Simple, transparent<br><span class="g">for every creator.</span></h2>
+      <p class="s-sub reveal delay-2">Buy what you need. Sell what you make. We only win when you do.</p>
+    </div>
+    <div class="prices">
+      <div class="price reveal-l delay-1">
+        <div class="p-name">Starter</div>
+        <div class="p-desc">For curious devs shipping side projects.</div>
+        <div class="p-num">$0<span>/mo</span></div>
+        <ul class="p-feats">
+          <li>Browse 24,000+ projects</li>
+          <li>5 downloads / month</li>
+          <li>Community license</li>
+          <li>Email support</li>
+        </ul>
+        <a class="btn-ghost" href="#" style="width:100%;justify-content:center;padding:14px"><span>Get started</span></a>
+      </div>
+      <div class="price popular reveal delay-2">
+        <div class="p-pop">Most popular</div>
+        <div class="p-name">Pro</div>
+        <div class="p-desc">For freelancers and indie hackers.</div>
+        <div class="p-num">$19<span>/mo</span></div>
+        <ul class="p-feats">
+          <li>Unlimited downloads</li>
+          <li>Commercial license</li>
+          <li>Early access drops</li>
+          <li>Priority support</li>
+          <li>Source + Figma files</li>
+        </ul>
+        <a class="btn-primary" href="#" style="width:100%;justify-content:center;padding:14px"><span>Start 14-day trial</span></a>
+      </div>
+      <div class="price reveal-r delay-3">
+        <div class="p-name">Studio</div>
+        <div class="p-desc">For teams shipping at scale.</div>
+        <div class="p-num">$79<span>/mo</span></div>
+        <ul class="p-feats">
+          <li>Everything in Pro</li>
+          <li>5 team seats</li>
+          <li>Private marketplace</li>
+          <li>Custom contracts</li>
+          <li>Dedicated success manager</li>
+        </ul>
+        <a class="btn-ghost" href="#" style="width:100%;justify-content:center;padding:14px"><span>Talk to sales</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.prices{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+@media(max-width:860px){.prices{grid-template-columns:1fr}}
+.price{position:relative;background:rgba(20,20,28,.5);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:28px;padding:32px;display:flex;flex-direction:column;transition:all .4s ease}
+.price::after{content:"";position:absolute;inset:0;border-radius:28px;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,0));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.price:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.22)}
+.price.popular{background:linear-gradient(180deg,rgba(124,92,255,.12),rgba(20,20,28,.7));border-color:rgba(124,92,255,.35);box-shadow:0 30px 60px rgba(124,92,255,.2)}
+.price.popular::after{background:linear-gradient(135deg,rgba(124,92,255,.6),rgba(34,211,238,.4));opacity:.5}
+.p-pop{position:absolute;top:-12px;left:50%;transform:translateX(-50%);padding:6px 14px;background:#fff;color:#000;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 8px 20px rgba(124,92,255,.4)}
+.p-name{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.02em;margin-bottom:8px}
+.p-desc{font-size:13.5px;color:var(--ink2);margin-bottom:24px;line-height:1.4}
+.p-num{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:600;letter-spacing:-.03em;margin-bottom:28px;line-height:1}
+.p-num span{font-size:16px;color:var(--ink2);font-weight:400}
+.p-feats{list-style:none;margin-bottom:28px;flex:1}
+.p-feats li{padding:10px 0;border-top:1px solid var(--line);font-size:14px;color:var(--ink2);display:flex;align-items:center;gap:10px}
+.p-feats li:first-child{border-top:none}
+.p-feats li::before{content:"";width:16px;height:16px;border-radius:50%;background:rgba(124,92,255,.2);flex-shrink:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='3'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");background-size:10px;background-repeat:no-repeat;background-position:center}
+</style>
+
+<!-- REVIEWS -->
+<section id="reviews" style="padding:120px 0;position:relative;overflow:hidden">
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-tag reveal">Loved by makers</div>
+      <h2 class="s-title reveal delay-1">12,400+ creators can't<br><span class="g">be wrong.</span></h2>
+    </div>
+  </div>
+  <div class="rev-wrap reveal">
+    <div class="rev-track" id="rev"></div>
+  </div>
+</section>
+
+<style>
+.rev-wrap{overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);padding:20px 0 40px}
+.rev-track{display:flex;gap:20px;padding:0 28px;width:max-content;animation:revScroll 70s linear infinite}
+.rev-wrap:hover .rev-track{animation-play-state:paused}
+@keyframes revScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.rev{flex-shrink:0;width:380px;background:rgba(20,20,28,.5);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:24px;padding:28px;transition:all .4s ease}
+.rev:hover{border-color:rgba(255,255,255,.22);transform:translateY(-4px)}
+.rev-stars{color:#fbbf24;font-size:14px;letter-spacing:2px;margin-bottom:14px}
+.rev-q{font-size:15.5px;line-height:1.5;margin-bottom:24px;color:var(--ink)}
+.rev-author{display:flex;align-items:center;gap:12px}
+.rev-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c5cff,#22d3ee);flex-shrink:0}
+.rev-meta{font-size:13px;line-height:1.3}
+.rev-name{font-weight:600}
+.rev-role{color:var(--ink2);font-size:12px}
+</style>
+
+<!-- CTA -->
+<section style="padding:60px 0 120px;position:relative">
+  <div class="wrap">
+    <div class="cta reveal-s">
+      <div class="cta-blob cta-blob1"></div>
+      <div class="cta-blob cta-blob2"></div>
+      <div class="cta-content">
+        <div class="s-tag" style="margin-bottom:20px">Ready to ship?</div>
+        <h2 class="cta-title">Start selling your projects<br>on <span class="g">NOVA</span> today.</h2>
+        <p class="cta-sub">Keep 90% of every sale. No upfront fees. Get paid weekly via Stripe, PayPal or crypto.</p>
+        <div class="cta-row">
+          <a class="btn-primary" href="#"><span>Create your shop <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span></a>
+          <a class="btn-ghost" href="#"><span>Read seller guide</span></a>
+        </div>
+        <div class="cta-trust">No credit card required · 30-day onboarding · Cancel anytime</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.cta{position:relative;background:rgba(20,20,28,.5);backdrop-filter:blur(28px);border:1px solid var(--border);border-radius:32px;padding:80px 40px;text-align:center;overflow:hidden}
+.cta::after{content:"";position:absolute;inset:0;border-radius:32px;padding:1px;background:linear-gradient(135deg,rgba(124,92,255,.5),rgba(34,211,238,.3) 50%,rgba(255,92,168,.4));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.4}
+.cta-blob{position:absolute;border-radius:50%;filter:blur(100px);opacity:.5}
+.cta-blob1{width:500px;height:500px;background:#7c5cff;top:-200px;left:-100px}
+.cta-blob2{width:400px;height:400px;background:#22d3ee;bottom:-150px;right:-100px}
+.cta-content{position:relative;z-index:1;max-width:680px;margin:0 auto}
+.cta-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(36px,5vw,56px);line-height:1.05;letter-spacing:-.03em;font-weight:600;margin-bottom:20px}
+.cta-sub{font-size:17px;color:var(--ink2);line-height:1.55;margin-bottom:36px;max-width:520px;margin-left:auto;margin-right:auto}
+.cta-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:24px}
+.cta-trust{font-size:13px;color:var(--ink2)}
+</style>
+
+<!-- FOOTER -->
+<footer style="padding:80px 0 40px;border-top:1px solid var(--line);position:relative">
+  <div class="wrap">
+    <div class="f-grid">
+      <div class="f-brand">
+        <a class="logo" href="#" style="margin-bottom:16px"><span class="logo-mark"></span> NOVA</a>
+        <p class="f-tag">A curated marketplace for premium digital projects. Built by creators, for creators.</p>
+        <div class="f-social">
+          <a class="soc" href="#"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a class="soc" href="#"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></a>
+          <a class="soc" href="#"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.063 2.063 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+          <a class="soc" href="#"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+        </div>
+      </div>
+      <div class="f-col">
+        <div class="f-head">Marketplace</div>
+        <a href="#">Browse projects</a>
+        <a href="#">Categories</a>
+        <a href="#">Top sellers</a>
+        <a href="#">New releases</a>
+        <a href="#">Free this week</a>
+      </div>
+      <div class="f-col">
+        <div class="f-head">Creators</div>
+        <a href="#">Start selling</a>
+        <a href="#">Seller handbook</a>
+        <a href="#">Payouts</a>
+        <a href="#">Affiliates</a>
+        <a href="#">API</a>
+      </div>
+      <div class="f-col">
+        <div class="f-head">Company</div>
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="f-col">
+        <div class="f-head">Legal</div>
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+        <a href="#">Licenses</a>
+        <a href="#">Refunds</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <div>© 2026 NOVA Labs Inc. · Made with care in San Francisco</div>
+      <div class="f-bot-r">All systems <span class="ok">●</span> operational</div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.f-grid{display:grid;grid-template-columns:2fr repeat(4,1fr);gap:48px;margin-bottom:60px}
+@media(max-width:860px){.f-grid{grid-template-columns:1fr 1fr;gap:32px}}
+.f-tag{font-size:14px;color:var(--ink2);line-height:1.55;max-width:300px;margin-bottom:20px}
+.f-social{display:flex;gap:8px}
+.soc{width:36px;height:36px;border-radius:10px;background:var(--glass);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .3s ease}
+.soc:hover{background:#fff;color:#000;transform:translateY(-2px)}
+.f-col{display:flex;flex-direction:column;gap:10px}
+.f-col a{font-size:14px;color:var(--ink2);transition:color .2s ease}
+.f-col a:hover{color:var(--ink)}
+.f-head{font-size:12px;font-weight:600;color:var(--ink);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.f-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:32px;border-top:1px solid var(--line);font-size:13px;color:var(--ink2);flex-wrap:wrap;gap:16px}
+.ok{color:#22c55e;display:inline-block;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+
+<script>
+// Rotating words
+(function(){
+  const words=document.querySelectorAll('.rot-word');
+  let i=0;
+  setInterval(()=>{
+    words[i].classList.remove('on');
+    words[i].classList.add('out');
+    i=(i+1)%words.length;
+    words[i].classList.remove('out');
+    words[i].classList.add('on');
+    setTimeout(()=>{const out=document.querySelectorAll('.rot-word.out');out.forEach(w=>w.classList.remove('out'))},700);
+  },2400);
+})();
+
+// Reveal on scroll
+(function(){
+  const obs=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}});
+  },{threshold:.12,rootMargin:'0px 0px -60px 0px'});
+  document.querySelectorAll('.reveal,.reveal-l,.reveal-r,.reveal-s').forEach(el=>obs.observe(el));
+})();
+
+// Nav scroll
+(function(){
+  const nav=document.getElementById('nav');
+  window.addEventListener('scroll',()=>{
+    if(window.scrollY>20) nav.style.transform='translateY(0)';
+  });
+})();
+
+// Stats counter
+(function(){
+  const nums=document.querySelectorAll('.stat-num');
+  const obs=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(!e.isIntersecting) return;
+      const el=e.target;
+      const target=+el.dataset.target;
+      const prefix=el.dataset.prefix||'';
+      const suffix=el.dataset.suffix||'';
+      const dur=1800;const start=performance.now();
+      function tick(t){
+        const p=Math.min((t-start)/dur,1);
+        const eased=1-Math.pow(1-p,3);
+        const val=Math.floor(target*eased);
+        let display;
+        if(val>=1000000){display=(val/1000000).toFixed(val%1000000===0?0:1).replace(/\.0$/,'')+'M'}
+        else if(val>=1000){display=(val/1000).toFixed(val%1000===0?0:1).replace(/\.0$/,'')+'K'}
+        else{display=val}
+        el.textContent=prefix+display+suffix;
+        if(p<1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+      obs.unobserve(el);
+    });
+  },{threshold:.5});
+  nums.forEach(n=>obs.observe(n));
+})();
+
+// Marquee
+(function(){
+  const brands=['Next.js','React','Vue','Svelte','TypeScript','Tailwind','iOS 27','Figma','Stripe','OpenAI','Supabase','Vercel','Three.js','Swift','Flutter','Rust','Go','Python','Postgres','Redis','Prisma','tRPC','Zustand','Framer Motion','Vite','Astro','Solid','Qwik','SvelteKit','Nuxt'];
+  const track=document.getElementById('mq');
+  const items=brands.concat(brands).map(b=>`<div class="mq-item"><span class="mq-dot"></span>${b}</div>`).join('');
+  track.innerHTML=items;
+})();
+
+// Projects data
+const projects=[
+  {cat:'web',tags:['Next.js','Stripe','tRPC'],title:'SaaS Starter Pro',desc:'Complete multi-tenant SaaS boilerplate with auth, billing, dashboard and team management.',author:'@nova.lab',grad:'g1',price:'$149',old:'$199',av:'a1',badge:'bestseller',badgeTxt:'BESTSELLER'},
+  {cat:'design',tags:['Figma','Tokens','Variants'],title:'Aurora UI Kit v3.2',desc:'1,200+ components, dark/light mode, auto-layout and design tokens for every framework.',author:'@lina.wu',grad:'g2',price:'$89',old:'',av:'a2',badge:'new',badgeTxt:'NEW'},
+  {cat:'ai',tags:['OpenAI','LangChain','Vector'],title:'GPT Researcher Pro',desc:'Production-grade RAG chatbot with streaming, citations, multi-source and admin panel.',author:'@ai.dev',grad:'g3',price:'$249',old:'$299',av:'a3',badge:'bestseller',badgeTxt:'TOP RATED'},
+  {cat:'mobile',tags:['Swift','SwiftUI','iOS 27'],title:'Lumen — iOS 27 Concept',desc:'Stunning SwiftUI app with glassy effects, custom animations and Core Data sync.',author:'@mattrr',grad:'g4',price:'$59',old:'',av:'a4',badge:'new',badgeTxt:'NEW'},
+  {cat:'web',tags:['Astro','MDX','SEO'],title:'Content Engine',desc:'Blazing fast blog + docs platform with MDX, full-text search and i18n out of the box.',author:'@tomos',grad:'g5',price:'$79',old:'',av:'a5',badge:'',badgeTxt:''},
+  {cat:'saas',tags:['React','Node','Postgres'],title:'Subscription Kit',desc:'Plug-and-play subscription billing UI for any app. Plans, trials, upgrades, webhooks.',author:'@siera.codes',grad:'g6',price:'$119',old:'$149',av:'a1',badge:'bestseller',badgeTxt:'HOT'},
+  {cat:'design',tags:['Framer','Webflow','CMS'],title:'Marketing Site System',desc:'20+ high-converting landing page sections. Responsive, animated, conversion-tested.',author:'@kasper',grad:'g1',price:'$129',old:'',av:'a2',badge:'',badgeTxt:''},
+  {cat:'ai',tags:['Python','FastAPI','PyTorch'],title:'Vision AI Toolkit',desc:'Drop-in object detection, OCR and image classification API with pre-trained models.',author:'@neura.lab',grad:'g2',price:'$189',old:'',av:'a3',badge:'new',badgeTxt:'NEW'},
+  {cat:'web',tags:['React','Three.js','GLSL'],title:'3D Portfolio Engine',desc:'Award-winning 3D portfolio templates with smooth camera paths and shader effects.',author:'@kira.fx',grad:'g3',price:'$99',old:'$129',av:'a4',badge:'',badgeTxt:''}
+];
+
+// Render grid
+(function(){
+  const grid=document.getElementById('grid');
+  function render(filter){
+    const list=filter==='all'?projects:projects.filter(p=>p.cat===filter);
+    grid.innerHTML=list.map((p,i)=>`
+      <article class="card reveal" data-cat="${p.cat}" style="transition-delay:${i*60}ms">
+        ${p.badge?`<div class="c-badge ${p.badge}">${p.badgeTxt}</div>`:''}
+        <button class="c-fav" aria-label="favorite">♥</button>
+        <div class="c-thumb">
+          <div class="c-glow c-thumb-${p.grad}"></div>
+          <div class="c-thumb-shape"><div class="c-shape"></div></div>
+        </div>
+        <div class="c-body">
+          <div class="c-tags">${p.tags.map(t=>`<span class="c-tag">${t}</span>`).join('')}</div>
+          <h3 class="c-title">${p.title}</h3>
+          <p class="c-desc">${p.desc}</p>
+          <div class="c-foot">
+            <div class="c-author"><div class="av2 ${p.av}"></div>${p.author}</div>
+            <div class="c-price-row">
+              <span class="c-price">${p.price}</span>
+              ${p.old?`<span class="c-old">${p.old}</span>`:''}
+              <a href="#" class="c-arrow" aria-label="view"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+            </div>
+          </div>
+        </div>
+      </article>
+    `).join('');
+    // re-observe new cards
+    const obs=new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}});
+    },{threshold:.1});
+    grid.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+  }
+  render('all');
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click',()=>{
+      document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
+      c.classList.add('on');
+      render(c.dataset.cat);
+    });
+  });
+})();
+
+// Categories
+(function(){
+  const cats=[
+    {n:'Web Apps',c:82,i:'◐',cls:'c1'},
+    {n:'Mobile',c:47,i:'▢',cls:'c2'},
+    {n:'AI & ML',c:34,i:'✦',cls:'c3'},
+    {n:'Design',c:61,i:'◇',cls:'c4'},
+    {n:'SaaS',c:24,i:'◆',cls:'c5'},
+    {n:'E-commerce',c:38,i:'◈',cls:'c6'},
+    {n:'Game Dev',c:19,i:'◉',cls:'c7'},
+    {n:'Dev Tools',c:53,i:'◎',cls:'c8'},
+    {n:'Web Apps',c:82,i:'◐',cls:'c1'},
+    {n:'Mobile',c:47,i:'▢',cls:'c2'},
+    {n:'AI & ML',c:34,i:'✦',cls:'c3'},
+    {n:'Design',c:61,i:'◇',cls:'c4'},
+    {n:'SaaS',c:24,i:'◆',cls:'c5'},
+    {n:'E-commerce',c:38,i:'◈',cls:'c6'},
+    {n:'Game Dev',c:19,i:'◉',cls:'c7'},
+    {n:'Dev Tools',c:53,i:'◎',cls:'c8'}
+  ];
+  const track=document.getElementById('cats');
+  track.innerHTML=cats.map(c=>`
+    <a class="cat-card ${c.cls}" href="#">
+      <div class="cat-icon">${c.i}</div>
+      <div>
+        <div class="cat-name">${c.n}</div>
+        <div class="cat-count">${c.c} projects</div>
+      </div>
+      <div class="cat-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17 17 7M9 7h8v8"/></svg></div>
+    </a>
+  `).join('');
+})();
+
+// Showcase
+(function(){
+  const items=[
+    {name:'Aurora Dashboard',cat:'Design system · 32 components',price:'$129',g:'g1',s1:'5.2k',s2:'★ 4.9'},
+    {name:'GPT Researcher Pro',cat:'AI · Production RAG stack',price:'$249',g:'g2',s1:'3.1k',s2:'★ 5.0'},
+    {name:'Lumen iOS App',cat:'Mobile · SwiftUI · iOS 27',price:'$59',g:'g3',s1:'1.8k',s2:'★ 4.8'},
+    {name:'SaaS Starter Pro',cat:'Web · Next.js · Stripe',price:'$149',g:'g4',s1:'8.4k',s2:'★ 4.9'},
+    {name:'Content Engine',cat:'Web · Astro · MDX',price:'$79',g:'g5',s1:'2.1k',s2:'★ 4.7'},
+    {name:'Vision AI Toolkit',cat:'AI · Python · PyTorch',price:'$189',g:'g6',s1:'1.2k',s2:'★ 4.9'},
+    {name:'Aurora Dashboard',cat:'Design system · 32 components',price:'$129',g:'g1',s1:'5.2k',s2:'★ 4.9'},
+    {name:'GPT Researcher Pro',cat:'AI · Production RAG stack',price:'$249',g:'g2',s1:'3.1k',s2:'★ 5.0'},
+    {name:'Lumen iOS App',cat:'Mobile · SwiftUI · iOS 27',price:'$59',g:'g3',s1:'1.8k',s2:'★ 4.8'},
+    {name:'SaaS Starter Pro',cat:'Web · Next.js · Stripe',price:'$149',g:'g4',s1:'8.4k',s2:'★ 4.9'},
+    {name:'Content Engine',cat:'Web · Astro · MDX',price:'$79',g:'g5',s1:'2.1k',s2:'★ 4.7'},
+    {name:'Vision AI Toolkit',cat:'AI · Python · PyTorch',price:'$189',g:'g6',s1:'1.2k',s2:'★ 4.9'}
+  ];
+  const track=document.getElementById('sc');
+  track.innerHTML=items.map(it=>`
+    <article class="sc-card">
+      <div class="sc-thumb">
+        <div class="c-glow c-thumb-${it.g}"></div>
+        <div class="c-thumb-shape"><div class="c-shape" style="width:140px;height:140px"></div></div>
+      </div>
+      <div class="sc-info">
+        <div class="sc-info-top"><div class="sc-name">${it.name}</div><div class="c-price">${it.price}</div></div>
+        <div class="sc-cat">${it.cat}</div>
+        <div class="sc-price-row">
+          <div class="sc-stats">
+            <span class="sc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>${it.s1}</span>
+            <span class="sc-stat">${it.s2}</span>
+          </div>
+          <a href="#" class="c-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+        </div>
+      </div>
+    </article>
+  `).join('');
+})();
+
+// Reviews
+(function(){
+  const revs=[
+    {q:'Saved me 3 months of work. The code is so clean I almost feel bad replacing it with my own.',n:'Sarah Chen',r:'Indie hacker, NYC',g:'linear-gradient(135deg,#7c5cff,#3b82f6)'},
+    {q:'The design system alone is worth 10x the price. Bought three projects in one sitting.',n:'Marcus Reid',r:'Product designer, Berlin',g:'linear-gradient(135deg,#ff5ca8,#f59e0b)'},
+    {q:'NOVA feels like the iOS of marketplaces. I came for the code, stayed for the vibe.',n:'Aiko Tanaka',r:'iOS engineer, Tokyo',g:'linear-gradient(135deg,#22d3ee,#10b981)'},
+    {q:'My SaaS went from idea to paying customers in 11 days. I credit the Starter Pro.',n:'David Park',r:'Founder, Seoul',g:'linear-gradient(135deg,#8b5cf6,#ec4899)'},
+    {q:'Quality is unreal. Every project I\'ve bought has been production-grade from day one.',n:'Lena Müller',r:'CTO, Munich',g:'linear-gradient(135deg,#06b6d4,#7c5cff)'},
+    {q:'Made my first $10k as a seller in two months. The platform just works.',n:'Jules Romero',r:'Creator, Lisbon',g:'linear-gradient(135deg,#10b981,#22d3ee)'},
+    {q:'Saved me 3 months of work. The code is so clean I almost feel bad replacing it with my own.',n:'Sarah Chen',r:'Indie hacker, NYC',g:'linear-gradient(135deg,#7c5cff,#3b82f6)'},
+    {q:'The design system alone is worth 10x the price. Bought three projects in one sitting.',n:'Marcus Reid',r:'Product designer, Berlin',g:'linear-gradient(135deg,#ff5ca8,#f59e0b)'},
+    {q:'NOVA feels like the iOS of marketplaces. I came for the code, stayed for the vibe.',n:'Aiko Tanaka',r:'iOS engineer, Tokyo',g:'linear-gradient(135deg,#22d3ee,#10b981)'},
+    {q:'My SaaS went from idea to paying customers in 11 days. I credit the Starter Pro.',n:'David Park',r:'Founder, Seoul',g:'linear-gradient(135deg,#8b5cf6,#ec4899)'},
+    {q:'Quality is unreal. Every project I\'ve bought has been production-grade from day one.',n:'Lena Müller',r:'CTO, Munich',g:'linear-gradient(135deg,#06b6d4,#7c5cff)'},
+    {q:'Made my first $10k as a seller in two months. The platform just works.',n:'Jules Romero',r:'Creator, Lisbon',g:'linear-gradient(135deg,#10b981,#22d3ee)'}
+  ];
+  const track=document.getElementById('rev');
+  track.innerHTML=revs.map(r=>`
+    <div class="rev">
+      <div class="rev-stars">★★★★★</div>
+      <p class="rev-q">"${r.q}"</p>
+      <div class="rev-author">
+        <div class="rev-avatar" style="background:${r.g}"></div>
+        <div class="rev-meta"><div class="rev-name">${r.n}</div><div class="rev-role">${r.r}</div></div>
+      </div>
+    </div>
+  `).join('');
+})();
+
+// fav toggle
+document.addEventListener('click',(e)=>{
+  if(e.target.closest('.c-fav')){e.target.closest('.c-fav').classList.toggle('on');e.preventDefault();e.stopPropagation()}
+});
+
+// subtle parallax on hero
+(function(){
+  const vis=document.querySelector('.hero-vis');
+  if(!vis) return;
+  vis.addEventListener('mousemove',(e)=>{
+    const r=vis.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    vis.style.transform=`perspective(1500px) rotateY(${x*6}deg) rotateX(${-y*6}deg)`;
+  });
+  vis.addEventListener('mouseleave',()=>{vis.style.transform='none'});
+})();
+</script>
+</body>
+</html>

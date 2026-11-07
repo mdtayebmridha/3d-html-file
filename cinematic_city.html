@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinematic Video Reveal</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: #000;
+            font-family: 'Inter', Helvetica, Arial, sans-serif;
+            color: white;
+            /* Use a very tall body for scrolling */
+            height: 400vh;
+        }
+
+        /* --- Fixed Viewport --- */
+        .viewport {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100vh;
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        /* --- The Background Video --- */
+        .bg-video {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            transform: scale(1.1); /* Slight zoom for parallax */
+            will-change: transform;
+        }
+
+        /* --- The Text Mask (Mix Blend Mode Magic) --- */
+        .mask-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: black;
+            display: flex; justify-content: center; align-items: center;
+            /* MULTIPLY makes white transparent and black opaque */
+            mix-blend-mode: multiply;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .mask-text {
+            color: white;
+            font-size: 30vw;
+            font-weight: 900;
+            line-height: 0.8;
+            margin: 0;
+            letter-spacing: -10px;
+            text-transform: uppercase;
+            text-align: center;
+            will-change: transform;
+            transform-origin: center center;
+            /* We will fly through the center of the text */
+        }
+
+        /* --- UI Elements --- */
+        header {
+            position: fixed; top: 30px; left: 40px; right: 40px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 100;
+        }
+        .logo { font-size: 1.2rem; font-weight: 900; letter-spacing: 2px; }
+        
+        .scroll-indicator {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+        .mouse {
+            width: 25px; height: 40px;
+            border: 2px solid white; border-radius: 15px;
+            position: relative;
+        }
+        .wheel {
+            width: 4px; height: 8px;
+            background: white; border-radius: 2px;
+            position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            animation: scroll 1.5s infinite;
+        }
+        @keyframes scroll {
+            0% { transform: translate(-50%, 0); opacity: 1; }
+            100% { transform: translate(-50%, 15px); opacity: 0; }
+        }
+
+        /* --- Secondary Content (Revealed after flying through) --- */
+        .content-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            will-change: opacity, transform;
+            transform: translateY(50px);
+        }
+
+        .glass-card {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .glass-card h2 {
+            font-size: 3.5rem;
+            margin: 0 0 10px 0;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff8a00, #e52e71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card p {
+            font-size: 1.2rem;
+            color: #ddd;
+            line-height: 1.6;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <div class="logo">O-I CINEMATICS</div>
+        <div style="font-size: 0.9rem; letter-spacing: 2px;">GOLDEN HOUR</div>
+    </header>
+
+    <div class="viewport">
+        <!-- The Drone Video -->
+        <video class="bg-video" id="video" autoplay muted loop playsinline>
+            <source src="file:///C:/Users/USER/Downloads/Video/Cinematic Golden Hour Drone Footage ｜ DJI Mavic 3 Pro Cine.mkv" type="video/mp4">
+            <!-- Fallback if MKV is not natively supported by the browser -->
+            Your browser does not support the video tag.
+        </video>
+
+        <!-- The Text Mask -->
+        <div class="mask-container">
+            <div id="mask-text" style="display: flex; align-items: flex-end; will-change: transform; transform-origin: center center; text-transform: uppercase;">
+                <!-- Stacked 'hello' and 'C' -->
+                <div style="display: flex; flex-direction: column; justify-content: flex-end;">
+                    <span style="font-size: 8vw; font-weight: 700; color: white; line-height: 0.8; margin-bottom: 0.5vw; padding-left: 0.5vw; text-transform: lowercase;">hello</span>
+                    <span style="font-size: 21.5vw; font-weight: 900; color: white; line-height: 0.8;">C</span>
+                </div>
+                <!-- 'ITY' -->
+                <span style="font-size: 30vw; font-weight: 900; color: white; line-height: 0.8; letter-spacing: -10px;">ITY</span>
+            </div>
+        </div>
+
+        <!-- The Final Reveal Content -->
+        <div class="content-overlay" id="content">
+            <div class="glass-card">
+                <h2>The Golden Hour</h2>
+                <p>Experience the city skyline like never before. Captured with DJI Mavic 3 Pro Cine, delivering stunning dynamic range and cinematic depth.</p>
+            </div>
+        </div>
+        
+        <div class="scroll-indicator" id="scroll-ind">
+            <span>Scroll Down</span>
+            <div class="mouse"><div class="wheel"></div></div>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scrolling engine
+        let currentScroll = 0;
+        let targetScroll = 0;
+
+        document.addEventListener('scroll', () => {
+            targetScroll = window.scrollY;
+        });
+
+        const maskText = document.getElementById('mask-text');
+        const video = document.getElementById('video');
+        const content = document.getElementById('content');
+        const scrollInd = document.getElementById('scroll-ind');
+
+        function animate() {
+            // Smooth lerp for buttery scroll
+            currentScroll += (targetScroll - currentScroll) * 0.08;
+            
+            const vh = window.innerHeight;
+            const maxScroll = vh * 2; 
+
+            let progress = currentScroll / maxScroll;
+            if (progress < 0) progress = 0;
+            
+            let scaleValue = 1 + Math.pow(progress * 10, 3);
+            maskText.style.transform = `scale(${scaleValue})`;
+
+            video.style.transform = `scale(${1.1 - (progress * 0.1)})`;
+            scrollInd.style.opacity = 1 - (progress * 5);
+
+            if (progress > 0.4) {
+                let contentProgress = (progress - 0.4) / 0.6; 
+                if (contentProgress > 1) contentProgress = 1;
+                
+                content.style.opacity = contentProgress;
+                content.style.transform = `translateY(${50 - (contentProgress * 50)}px)`;
+            } else {
+                content.style.opacity = 0;
+                content.style.transform = `translateY(50px)`;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
